@@ -46,10 +46,12 @@ client = Client('technopark_ruliiiit')
 
 
 def create_message(events):
+    message = ''
+    print(events)
     for event in events:
-        message = "Title: "+ event['title']
+        message += "Title: "+ event['title']+"\n"  +"Facebook: "+ event['facebook_rsvp_url']
         # + "Ticket status: "+ event['ticket_status'] + "\n"
-        # +"Facebook: "+ event['facebook_rsvp_url']
+
         # print("Ticket type: ", event['ticket_type'])
         # print("Formated datetime: ", event['formatted_datetime'])
         # print("Datetime: ", event['datetime'])
