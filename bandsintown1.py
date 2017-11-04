@@ -48,38 +48,51 @@ client = Client('technopark_ruliiiit')
 def create_message(events):
 
     messages = list()
-    print(events)
-    for event in events:
-        message = list()
-        # + "Ticket status: "+ event['ticket_status'] + "\n"
-        # print("Ticket type: ", event['ticket_type'])
-        message.append("Event date: " + event['formatted_datetime'])
-        # message += "Datetime: "+ event['datetime']
-        # print("Formatted location: ", event['formatted_datetime'])
-        if (event['ticket_url']):
-            message.append("Ticket url: " + event['ticket_url'])
-        # print("Ticket status: ", event['ticket_status'])
-        for artist in event['artists']:
-            if (artist['name']):
-                message.append("Artist: "+ artist['name'])
-        #     print("Facebook page: ", artist['facebook_page_url'])
-        #     print("Url: ", artist['url'])
-        #     print("Thumb url: ", artist['thumb_url'])
-        #     print("Image url: ", artist["image_url"])
-        #     print("Facebook tour dates: ", artist['facebook_tour_dates_url'])
-        #     print("Website: ", artist['website'])
-        #
-        # venue = event['venue']
-        # print("City: ", venue['city'])
-        # print("Name: ", venue['name'])
-        # print("Place: ", venue['place'])
-        # print("Region: ", venue['region'])
-        messages.append("\n".join(message))
-    messages.append("Title: "+ event['title']+"\n" +event['facebook_rsvp_url'])
+    if events:
+        message = ''
+        prev_event_title = ''
+
+        if events[0]['artists'][0]['name']:
+                message += "Artist: " + events[0]['artists'][0]['name'] + "\n\n"
+
+        for event in events:
+
+            if event['title'] != prev_event_title:
+                messages.append(message)
+                message = "<b>        " + event['title'] + "</b>\n\n"
+
+            message += "Event date: " + event['formatted_datetime'] + "\n"
+
+            prev_event_title = event['title']
+
+            if event['ticket_url']:
+                message += "<a href = \"" + event['ticket_url'] + "\" >By tickets</a>" + "\n\n"
+            else:
+                message += "<a href = \"" + events[0]['facebook_rsvp_url'] + "\" >By tickets</a>" + "\n\n"
+
+            # "Ticket status: "+ event['ticket_status']
+            # "Ticket type: ", event['ticket_type']
+            # "Datetime: "+ event['datetime']
+            #  "Formatted location: ", event['formatted_datetime']
+            # print("Ticket status: ", event['ticket_status'])
+            #     print("Facebook page: ", artist['facebook_page_url'])
+            #     print("Url: ", artist['url'])
+            #     print("Thumb url: ", artist['thumb_url'])
+            #     print("Image url: ", artist["image_url"])
+            #     print("Facebook tour dates: ", artist['facebook_tour_dates_url'])
+            #     print("Website: ", artist['website'])
+            #
+            # venue = event['venue']
+            # print("City: ", venue['city'])
+            # print("Name: ", venue['name'])
+            # print("Place: ", venue['place'])
+            # print("Region: ", venue['region'])
+
+        messages.append(message)
+
     return messages
 
 
- #   print("Artist: ", srch['artists'])
 
 # Pass an optional radius (in miles)
 #
