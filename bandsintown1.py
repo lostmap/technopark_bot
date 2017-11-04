@@ -46,17 +46,18 @@ client = Client('technopark_ruliiiit')
 
 
 def create_message(events):
-    message = ''
+
+    messages = list()
     print(events)
     for event in events:
-        message += "Title: "+ event['title']+"\n"  +"Facebook: "+ event['facebook_rsvp_url']
+        message = "Title: "+ event['title']+"\n"  +"Facebook: "+ event['facebook_rsvp_url'] + "\n"
         # + "Ticket status: "+ event['ticket_status'] + "\n"
 
         # print("Ticket type: ", event['ticket_type'])
-        # print("Formated datetime: ", event['formatted_datetime'])
-        # print("Datetime: ", event['datetime'])
+        message += "Formated datetime: " + event['formatted_datetime'] + "\n"
+        # message += "Datetime: "+ event['datetime']
         # print("Formatted location: ", event['formatted_datetime'])
-        # print("Ticket url: ", event['ticket_url'])
+        message += "Ticket url: " + event['ticket_url']
         # print("Ticket status: ", event['ticket_status'])
         # for artist in event['artists']:
         #     print("Artist: ", artist['name'])
@@ -72,7 +73,8 @@ def create_message(events):
         # print("Name: ", venue['name'])
         # print("Place: ", venue['place'])
         # print("Region: ", venue['region'])
-    return message
+        messages.append(message)
+    return messages
 
 
  #   print("Artist: ", srch['artists'])
