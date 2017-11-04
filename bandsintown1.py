@@ -50,17 +50,18 @@ def create_message(events):
     messages = list()
     print(events)
     for event in events:
-        message = "Title: "+ event['title']+"\n"  +"Facebook: "+ event['facebook_rsvp_url'] + "\n"
+        message = list()
         # + "Ticket status: "+ event['ticket_status'] + "\n"
-
         # print("Ticket type: ", event['ticket_type'])
-        message += "Formated datetime: " + event['formatted_datetime'] + "\n"
+        message.append("Event date: " + event['formatted_datetime'])
         # message += "Datetime: "+ event['datetime']
         # print("Formatted location: ", event['formatted_datetime'])
-        message += "Ticket url: " + event['ticket_url']
+        if (event['ticket_url']):
+            message.append("Ticket url: " + event['ticket_url'])
         # print("Ticket status: ", event['ticket_status'])
-        # for artist in event['artists']:
-        #     print("Artist: ", artist['name'])
+        for artist in event['artists']:
+            if (artist['name']):
+                message.append("Artist: "+ artist['name'])
         #     print("Facebook page: ", artist['facebook_page_url'])
         #     print("Url: ", artist['url'])
         #     print("Thumb url: ", artist['thumb_url'])
@@ -73,7 +74,8 @@ def create_message(events):
         # print("Name: ", venue['name'])
         # print("Place: ", venue['place'])
         # print("Region: ", venue['region'])
-        messages.append(message)
+        messages.append("\n".join(message))
+    messages.append("Title: "+ event['title']+"\n" +event['facebook_rsvp_url'])
     return messages
 
 
@@ -113,7 +115,7 @@ def create_message(events):
 #     print("Region: ", venue['region'])
 
 
-# # Only show recommendations
+#  Only show recommendations
 #
 # client.recommended('Rise Against', location='Portland,OR', only_recs=True)
 #
