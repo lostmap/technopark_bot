@@ -19,10 +19,8 @@ client = Client('technopark_ruliiiit')
 token = '460978562:AAGf9KzIv2RQuBQ-nwDpWnm2D3BYy8IB5rw'
 bot = telebot.TeleBot(token)
 
-
-url= Request('http://www.planwallpaper.com/static/images/i-should-buy-a-boat.jpg', headers={'User-Agent': 'Mozilla/5.0'})
-with open('out.jpg','wb') as f:
-    f.write(urllib.request.urlopen(url).read())
+left_arrow  = u'\U00002B05' #right emoji
+right_arrow = u'\U000027A1' #left emoji
 
 @bot.message_handler(commands=['start'])
 def artist_search(message):
@@ -115,29 +113,31 @@ def pages_keyboard(page): #создаем кнопки для листания �
     keyboard = types.InlineKeyboardMarkup()
     btns = []
     if page > 0: btns.append(types.InlineKeyboardButton(
-        text='<=', callback_data='<={}'.format(page - 1)))
+        text = left_arrow, callback_data = '{arrow}{page}'.format(arrow = left_arrow,
+            page = page - 1)))
     if page < len(my_buff) - 1: btns.append(types.InlineKeyboardButton(
-        text='=>', callback_data='=>{}'.format(page + 1)))
+        text = right_arrow, callback_data = '{arrow}{page}'.format(arrow = right_arrow,
+            page = page + 1)))
     keyboard.add(*btns)
     return keyboard # возвращаем объект клавиатуры
 
-@bot.callback_query_handler(func=lambda call: call.data)  
+@bot.callback_query_handler(func = lambda call: call.data)  
 def pages(call): #Обрабатываем нажатия кнопок
-    if call.data[:2] == '<=': 
+    if call.data[:1] == left_arrow: 
         bot.edit_message_text(
             chat_id = call.message.chat.id,
             message_id = call.message.message_id,
-            text = my_buff[int(call.data[2:])]['text'],
+            text = my_buff[int(call.data[1:])]['text'],
             parse_mode = 'Markdown',
-            reply_markup = pages_keyboard(int(call.data[2:])),
+            reply_markup = pages_keyboard(int(call.data[1:])),
             disable_web_page_preview = True)
-    if call.data[:2] == '=>':
+    if call.data[:1] == right_arrow:
         bot.edit_message_text(
             chat_id = call.message.chat.id,
             message_id = call.message.message_id,
-            text = my_buff[int(call.data[2:])]['text'],
+            text = my_buff[int(call.data[1:])]['text'],
             parse_mode = 'Markdown',
-            reply_markup = pages_keyboard(int(call.data[2:])),
+            reply_markup = pages_keyboard(int(call.data[1:])),
             disable_web_page_preview = True)
 
 #my_messages = bit.create_message(events)
