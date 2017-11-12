@@ -5,89 +5,32 @@ import telega
 from bandsintown import Client
 client = Client('technopark_ruliiiit')
 
+pushpin = u'\U0001F4CC' #pushpin emoji
 
-
-
-# #GET
-#
-# # Find an artist by name
-#
-# client.get('Bad Religion')
-#
-# # Find an artist by Facebook page ID
-#
-# client.get(fbid=168803467003)
-#
-# # Find an artist by MusicBrainz ID
-#
-# client.get(mbid='149e6720-4e4a-41a4-afca-6d29083fc091')
-#
-#
-#
-# #Events
-#
-# client.events('Bad Religion')
-#
-# # Filter by date
-#
-# client.events('Bad Religion', date='2015-08-30')
-#
-# # ...or a date range
-#
-# # Filter by date
-#
-# client.events('Bad Religion', date='2015-08-30,2015-12-25')
-
-
-
-
-#Search
-
-
-
-def create_message(events):
-
-    messages = list()
+def create_message(events): 
+    messages = list() #массив сообщений
     if events:
-        message = ''
-        prev_event_title = ''
+        message = {'text': '', 'photo': ''}
 
         if events[0]['artists'][0]['name']:
-                message += "Artist: " + events[0]['artists'][0]['name'] + "\n\n"
+                message['text'] += "Artist: " + events[0]['artists'][0]['name'] + "\n\n"
 
+        message['photo'] += "[" + pushpin + "](" + events[0]['artists'][0]['thumb_url'] + ")"
+        clock = 0
         for event in events:
-
-            if event['title'] != prev_event_title:
-                messages.append(message)
-                message = "<b>        " + event['title'] + "</b>\n\n"
-
-            message += "Event date: " + event['formatted_datetime'] + "\n"
-
-            prev_event_title = event['title']
-
+            clock += 1
+            message['text'] += "*" + event['title'] + "* \n"
+            message['text'] += "Event date: " + event['formatted_datetime'] + "\n"
+             
             if event['ticket_url']:
-                message += "<a href = \"" + event['ticket_url'] + "\" >By tickets</a>" + "\n\n"
+                message['text'] += "[By tickets](" + event['ticket_url'] + ")\n\n"
             else:
-                message += "<a href = \"" + events[0]['facebook_rsvp_url'] + "\" >By tickets</a>" + "\n\n"
-
-            # "Ticket status: "+ event['ticket_status']
-            # "Ticket type: ", event['ticket_type']
-            # "Datetime: "+ event['datetime']
-            #  "Formatted location: ", event['formatted_datetime']
-            # print("Ticket status: ", event['ticket_status'])
-            #     print("Facebook page: ", artist['facebook_page_url'])
-            #     print("Url: ", artist['url'])
-            #     print("Thumb url: ", artist['thumb_url'])
-            #     print("Image url: ", artist["image_url"])
-            #     print("Facebook tour dates: ", artist['facebook_tour_dates_url'])
-            #     print("Website: ", artist['website'])
-            #
-            # venue = event['venue']
-            # print("City: ", venue['city'])
-            # print("Name: ", venue['name'])
-            # print("Place: ", venue['place'])
-            # print("Region: ", venue['region'])
-
+                message['text'] += "[By tickets](" + events[0]['facebook_rsvp_url'] + ")\n\n"
+            if clock == 5: #каждые 5 событий = новое сообщение
+                messages.append(message)
+                message = {'text': '', 'photo': ''}
+                message['text'] += "Artist: " + event['artists'][0]['name'] + "\n\n"
+                clock = 0
         messages.append(message)
 
     return messages

@@ -30,3 +30,15 @@ def get_similar_artists(artist):
     for artist in artists:
         artists_name.append(artist['name'])
     return artists_name
+
+
+
+
+
+
+
+
+
+
+
+

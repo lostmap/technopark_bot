@@ -10,13 +10,19 @@ import bandsintown1 as bit
 
 import sqlite3
 
+from urllib.request import Request
+
 from bandsintown import Client
 client = Client('technopark_ruliiiit')
 
 
-token = '403882463:AAGFabioSaA1uY5Iku7v-lXVJegeIoP-J3E'
+token = '460978562:AAGf9KzIv2RQuBQ-nwDpWnm2D3BYy8IB5rw'
 bot = telebot.TeleBot(token)
 
+
+url= Request('http://www.planwallpaper.com/static/images/i-should-buy-a-boat.jpg', headers={'User-Agent': 'Mozilla/5.0'})
+with open('out.jpg','wb') as f:
+    f.write(urllib.request.urlopen(url).read())
 
 @bot.message_handler(commands=['start'])
 def artist_search(message):
@@ -59,7 +65,8 @@ def artist_search(message):
     else:
         bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
 
-
+# TODO FIX GENRE
+"""
 @bot.message_handler(commands=['genre'])
 def event_search_by_genre(message):
     my_artists = mg.get_by_genre(message.text[7:])
@@ -69,9 +76,9 @@ def event_search_by_genre(message):
         if events:
             my_messages = bit.create_message(events)
             for my_message in my_messages:
-                bot.send_message(message.chat.id, my_message, parse_mode='HTML')
-
-
+                bot.send_message(message.chat.id, my_message, parse_mode='HTML', disable_web_page_preview = True)
+"""               
+# TODO FIX GENRE 
 
 
 
@@ -95,13 +102,48 @@ def artist_search(message):
         events = client.events(params[0])
     print(events)
     my_messages = bit.create_message(events)
-    for my_message in my_messages:
-        bot.send_message(message.chat.id, my_message, parse_mode='HTML')
+    global my_buff #чтобы данные были доступны другим хэндлерам (знаю, что выглядит как говнокод)
+    my_buff = my_messages # TODO создай класс
+    bot.send_message(message.chat.id, my_messages[0]['text'], parse_mode='Markdown',
+     disable_web_page_preview = True,
+     reply_markup = pages_keyboard(0)) #нулевая страница
+    bot.send_message(message.chat.id, my_messages[0]['photo'], parse_mode='Markdown',
+     disable_notification = True)
 
 
+def pages_keyboard(page): #создаем кнопки для листания блоков информации
+    keyboard = types.InlineKeyboardMarkup()
+    btns = []
+    if page > 0: btns.append(types.InlineKeyboardButton(
+        text='<=', callback_data='<={}'.format(page - 1)))
+    if page < len(my_buff) - 1: btns.append(types.InlineKeyboardButton(
+        text='=>', callback_data='=>{}'.format(page + 1)))
+    keyboard.add(*btns)
+    return keyboard # возвращаем объект клавиатуры
 
+@bot.callback_query_handler(func=lambda call: call.data)  
+def pages(call): #Обрабатываем нажатия кнопок
+    if call.data[:2] == '<=': 
+        bot.edit_message_text(
+            chat_id = call.message.chat.id,
+            message_id = call.message.message_id,
+            text = my_buff[int(call.data[2:])]['text'],
+            parse_mode = 'Markdown',
+            reply_markup = pages_keyboard(int(call.data[2:])),
+            disable_web_page_preview = True)
+    if call.data[:2] == '=>':
+        bot.edit_message_text(
+            chat_id = call.message.chat.id,
+            message_id = call.message.message_id,
+            text = my_buff[int(call.data[2:])]['text'],
+            parse_mode = 'Markdown',
+            reply_markup = pages_keyboard(int(call.data[2:])),
+            disable_web_page_preview = True)
 
-
+#my_messages = bit.create_message(events)
+#for my_message in my_messages:
+#     bot.send_message(message.chat.id, my_message['text'], parse_mode='Markdown', disable_web_page_preview = True)
+#bot.send_message(message.chat.id, my_messages[0]['photo'], parse_mode='Markdown', disable_notification = True)
 
 # @bot.message_handler(content_types=["text"])
 # def recommendations(message):
