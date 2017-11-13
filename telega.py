@@ -1,5 +1,6 @@
 import telebot
 from telebot import types
+import sqlite3
 
 import musicgraph1 as mg
 
@@ -11,6 +12,53 @@ client = Client('technopark_ruliiiit')
 
 token = '403882463:AAGFabioSaA1uY5Iku7v-lXVJegeIoP-J3E'
 bot = telebot.TeleBot(token)
+
+import logging
+
+logging.basicConfig(format = u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(asctime)s]  %(message)s',
+                    filename="sample.log", level=logging.INFO)
+
+
+@bot.message_handler(commands=['start'])
+def artist_search(message):
+    conn = sqlite3.connect('music_bot.sqlite')
+    c = conn.cursor()
+    user_id = message.from_user.id
+    c.execute('SELECT user_id FROM users WHERE user_id = ?', (user_id,))
+    row = c.fetchone()
+    if row is None:
+        c.execute("insert into users values (?, ?) ", (user_id, user_id))
+        conn.commit()
+    c.close()
+    conn.close()
+
+
+@bot.message_handler(commands=['fan_of'])
+def artist_search(message):
+    artist_name = message.text[7:].strip()
+    artist_request = client.get(artist_name)
+    if 'errors' not in artist_request:
+        artist_id = artist_request['id']
+        user_id = message.from_user.id
+        conn = sqlite3.connect('music_bot.sqlite')
+        c = conn.cursor()
+        c.execute('SELECT user_id, artist_id FROM favorites WHERE user_id = ? AND artist_id = ?', (user_id, artist_id))
+        row = c.fetchone()
+        if row is None:
+            c.execute("insert into favorites values (?, ?) ", (user_id, artist_id))
+            conn.commit()
+
+        c.execute('SELECT artist_id FROM artists WHERE artist_id = ?', (artist_id,))
+        row = c.fetchone()
+        if row is None:
+            events = client.events(artist_name)
+            last_concert_date = events[len(events)-1]['datetime']
+            c.execute("insert into artists values (?, ?) ", (artist_id, last_concert_date))
+            conn.commit()
+        c.close()
+        conn.close()
+    else:
+        bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
 
 
 #кнопка для жанров
@@ -27,11 +75,6 @@ def callback_inline(call):
     call.message.text = '/genre ' + call.data
     event_search_by_genre(call.message)
 
-
-# чисто чтоб обновить список комманд или сообщения, крч нужная штука
-@bot.message_handler(commands=['start'])
-def event_search_by_genre(message):
-    pass
 
 
 # #для /genre жанр
@@ -88,21 +131,40 @@ def event_search_by_genre(message):
     #         bot.send_message(message.chat.id, my_message, parse_mode='HTML')
 
 
+# для /similar артист
+@bot.message_handler(commands=['similar'])
+def event_search_by_similar(message):
+    my_artists = mg.get_similar_artists(message.text[9:])
+    print(message.text[9:])
+    # if 'errors' not in my_artists:
+    bot.send_message(message.chat.id, "\n".join(my_artists))
+    for artist in my_artists:
+        events = client.events(artist)
+        if events:
+            my_messages = bit.create_message(events)
+            for my_message in my_messages:
+                bot.send_message(message.chat.id, my_message, parse_mode='HTML')
+
 
 # для ввода Артист, Город
 @bot.message_handler(content_types=["text"])
 def artist_search(message):
+
     params = message.text.split(",")
     if len(params) == 2:
         events = client.search(params[0].strip(), location=params[1].strip())
     else:
         events = client.events(params[0])
-    print(events)
-    my_messages = bit.create_message(events)
-    for my_message in my_messages:
-        bot.send_message(message.chat.id, my_message, parse_mode='HTML')
 
-
+    try:
+        my_messages = bit.create_message(events)
+    except:
+        logging.error("Ooops")
+        bot.send_message(message.chat.id, 'try again')
+        return
+    else:
+        for my_message in my_messages:
+            bot.send_message(message.chat.id, my_message, parse_mode='HTML')
 
 
 
