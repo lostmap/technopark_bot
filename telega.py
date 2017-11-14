@@ -64,7 +64,7 @@ def artist_search(message):
         bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
 
 # TODO FIX GENRE
-"""
+
 @bot.message_handler(commands=['genre'])
 def event_search_by_genre(message):
     my_artists = mg.get_by_genre(message.text[7:])
@@ -73,9 +73,12 @@ def event_search_by_genre(message):
         events = client.events(artist)
         if events:
             my_messages = bit.create_message(events)
-            for my_message in my_messages:
-                bot.send_message(message.chat.id, my_message, parse_mode='HTML', disable_web_page_preview = True)
-"""               
+            artist_id_list[my_messages[0]['artist_id']] = my_messages # TODO создай класс
+            bot.send_message(message.chat.id, my_messages[0]['text'], parse_mode='Markdown',
+                disable_web_page_preview = True,
+                reply_markup = pages_keyboard(0, my_messages[0]['artist_id'])) #нулевая страница
+            bot.send_message(message.chat.id, my_messages[0]['photo'], parse_mode='Markdown',
+                disable_notification = True)
 # TODO FIX GENRE 
 
 
@@ -89,7 +92,7 @@ def event_search_by_genre(message):
     #     my_messages = bit.create_message(events)
     #     for my_message in my_messages:
     #         bot.send_message(message.chat.id, my_message, parse_mode='HTML')
-
+artist_id_list = {} #содержит результаты поиска по каждому артисту
 
 @bot.message_handler(content_types=["text"])
 def artist_search(message):
@@ -98,48 +101,44 @@ def artist_search(message):
         events = client.search(params[0].strip(), location=params[1].strip())
     else:
         events = client.events(params[0])
-    print(events)
+    #print(events)
     my_messages = bit.create_message(events)
-    global my_buff #чтобы данные были доступны другим хэндлерам (знаю, что выглядит как говнокод)
-    my_buff = my_messages # TODO создай класс
+    artist_id_list[my_messages[0]['artist_id']] = my_messages # TODO создай класс
     bot.send_message(message.chat.id, my_messages[0]['text'], parse_mode='Markdown',
      disable_web_page_preview = True,
-     reply_markup = pages_keyboard(0)) #нулевая страница
+     reply_markup = pages_keyboard(0, my_messages[0]['artist_id'])) #нулевая страница
     bot.send_message(message.chat.id, my_messages[0]['photo'], parse_mode='Markdown',
      disable_notification = True)
 
 
-def pages_keyboard(page): #создаем кнопки для листания блоков информации
+def pages_keyboard(page, artist_id): #создаем кнопки для листания блоков информации
     keyboard = types.InlineKeyboardMarkup()
     btns = []
     if page > 0: btns.append(types.InlineKeyboardButton(
-        text = left_arrow, callback_data = '{arrow}{page}'.format(arrow = left_arrow,
-            page = page - 1)))
-    if page < len(my_buff) - 1: btns.append(types.InlineKeyboardButton(
-        text = right_arrow, callback_data = '{arrow}{page}'.format(arrow = right_arrow,
-            page = page + 1)))
+        text = left_arrow, callback_data = '{arrow}_{page}_{artist}'.format(arrow = left_arrow,
+            page = page - 1,
+            artist = artist_id)))
+    if page < len(artist_id_list[artist_id]) - 1: btns.append(types.InlineKeyboardButton(
+        text = right_arrow, callback_data = '{arrow}_{page}_{artist}'.format(arrow = right_arrow,
+            page = page + 1,
+            artist = artist_id)))
     keyboard.add(*btns)
     return keyboard # возвращаем объект клавиатуры
 
 @bot.callback_query_handler(func = lambda call: call.data)  
 def pages(call): #Обрабатываем нажатия кнопок
-    if call.data[:1] == left_arrow: 
+    arrow   = call.data.split('_')[0]
+    page    = call.data.split('_')[1]
+    artist  = call.data.split('_')[2]
+    if arrow == left_arrow or right_arrow:
         bot.edit_message_text(
             chat_id = call.message.chat.id,
             message_id = call.message.message_id,
-            text = my_buff[int(call.data[1:])]['text'],
-            parse_mode = 'Markdown',
-            reply_markup = pages_keyboard(int(call.data[1:])),
+            text = artist_id_list[int(artist)][int(page)]['text'],
+            parse_mode = 'Markdown', 
+            reply_markup = pages_keyboard(int(page),int(artist)),
             disable_web_page_preview = True)
-    if call.data[:1] == right_arrow:
-        bot.edit_message_text(
-            chat_id = call.message.chat.id,
-            message_id = call.message.message_id,
-            text = my_buff[int(call.data[1:])]['text'],
-            parse_mode = 'Markdown',
-            reply_markup = pages_keyboard(int(call.data[1:])),
-            disable_web_page_preview = True)
-
+        
 #my_messages = bit.create_message(events)
 #for my_message in my_messages:
 #     bot.send_message(message.chat.id, my_message['text'], parse_mode='Markdown', disable_web_page_preview = True)

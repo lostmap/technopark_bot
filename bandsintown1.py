@@ -10,11 +10,12 @@ pushpin = u'\U0001F4CC' #pushpin emoji
 def create_message(events): 
     messages = list() #массив сообщений
     if events:
-        message = {'text': '', 'photo': ''}
+        message = {'artist_id': 0, 'text': '', 'photo': ''}
 
         if events[0]['artists'][0]['name']:
                 message['text'] += "Artist: " + events[0]['artists'][0]['name'] + "\n\n"
-
+        
+        message['artist_id'] += events[0]['artist_id'] 
         message['photo'] += "[" + pushpin + "](" + events[0]['artists'][0]['thumb_url'] + ")"
         clock = 0
         for event in events:
@@ -28,8 +29,9 @@ def create_message(events):
                 message['text'] += "[By tickets](" + events[0]['facebook_rsvp_url'] + ")\n\n"
             if clock == 5: #каждые 5 событий = новое сообщение
                 messages.append(message)
-                message = {'text': '', 'photo': ''}
-                message['text'] += "Artist: " + event['artists'][0]['name'] + "\n\n"
+                message = {'artist_id': 0, 'text': '', 'photo': ''}
+                if events[0]['artists'][0]['name']:
+                    message['text'] += "Artist: " + event['artists'][0]['name'] + "\n\n"
                 clock = 0
         messages.append(message)
 
