@@ -4,9 +4,9 @@ import requests
 import urllib
 from telebot.types import MessageEntity
 
-import musicgraph1 as mg
+import mymusicgraph as mg
 
-import bandsintown1 as bit
+import mybandsintown as bit
 
 import sqlite3
 
@@ -19,8 +19,15 @@ client = Client('technopark_ruliiiit')
 token = '460978562:AAGf9KzIv2RQuBQ-nwDpWnm2D3BYy8IB5rw'
 bot = telebot.TeleBot(token)
 
+import logging
+
+logging.basicConfig(format = u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(asctime)s]  %(message)s',
+                    filename="sample.log", level=logging.INFO)
+
 left_arrow  = u'\U00002B05' #right emoji
 right_arrow = u'\U000027A1' #left emoji
+
+artist_id_list = {}
 
 @bot.message_handler(commands=['start'])
 def artist_search(message):
@@ -64,7 +71,7 @@ def artist_search(message):
         bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
 
 # TODO FIX GENRE
-
+"""
 @bot.message_handler(commands=['genre'])
 def event_search_by_genre(message):
     my_artists = mg.get_by_genre(message.text[7:])
@@ -80,7 +87,64 @@ def event_search_by_genre(message):
             bot.send_message(message.chat.id, my_messages[0]['photo'], parse_mode='Markdown',
                 disable_notification = True)
 # TODO FIX GENRE 
+"""
+@bot.message_handler(commands=['genre'])
+def event_search_by_genre(message):
+    if len(message.text) == 6:
+        genre_buttons(message)
+    else:
+        params = message.text.split(",")
+        params[0] = params[0][7:].strip()
 
+        if len(params) == 2:
+            my_artists = mg.get_by_genre(params[0])
+            bot.send_message(message.chat.id, "\n".join(my_artists))
+            for artist in my_artists:
+                events = client.search(artist, location=params[1].strip())
+                try:
+                    my_messages = bit.create_message(events)
+                    artist_id_list[my_messages[0]['artist_id']] = my_messages
+                except:
+                    logging.error("Ooops")
+                    bot.send_message(message.chat.id, 'try again')
+                    return
+                else:
+                    bot.send_message(message.chat.id, my_messages[0]['text'],
+                        parse_mode='Markdown',
+                        disable_web_page_preview = True,
+                        reply_markup = pages_keyboard(0, my_messages[0]['artist_id'])) #нулевая страница
+                    bot.send_message(message.chat.id, my_messages[0]['photo'],
+                        parse_mode='Markdown',
+                        disable_notification = True)
+        else:
+            my_artists = mg.get_by_genre(params[0])
+            bot.send_message(message.chat.id, "\n".join(my_artists))
+            for artist in my_artists:
+                events = client.events(artist)
+                try:
+                    my_messages = bit.create_message(events)
+                    artist_id_list[my_messages[0]['artist_id']] = my_messages
+                except:
+                    logging.error("Ooops")
+                    bot.send_message(message.chat.id, 'try again')
+                    return
+                else:
+                    bot.send_message(message.chat.id, my_messages[0]['text'],
+                        parse_mode='Markdown',
+                        disable_web_page_preview = True,
+                        reply_markup = pages_keyboard(0, my_messages[0]['artist_id'])) #нулевая страница
+                    bot.send_message(message.chat.id, my_messages[0]['photo'],
+                        parse_mode='Markdown',
+                        disable_notification = True)
+
+
+
+def genre_buttons(message): #кнопка для жанров
+    keyboard = types.InlineKeyboardMarkup()
+    keyboard.add(*[types.InlineKeyboardButton(text=genre[5:], callback_data=genre) for genre in ['genreRock', 'genreAlternative/Indie', 'genrePop',
+                                                                                               'genreJazz', 'genreSoul/R&B', 'genreBlues',
+                                                                                              'genreRap/Hip Hop', 'genreFolk']])
+    bot.send_message(message.chat.id, "Какой жанр выберешь?", reply_markup=keyboard)
 
 
 # @bot.message_handler(commands=['date'])
@@ -92,7 +156,7 @@ def event_search_by_genre(message):
     #     my_messages = bit.create_message(events)
     #     for my_message in my_messages:
     #         bot.send_message(message.chat.id, my_message, parse_mode='HTML')
-artist_id_list = {} #содержит результаты поиска по каждому артисту
+ #содержит результаты поиска по каждому артисту
 
 @bot.message_handler(content_types=["text"])
 def artist_search(message):
@@ -102,13 +166,20 @@ def artist_search(message):
     else:
         events = client.events(params[0])
     #print(events)
-    my_messages = bit.create_message(events)
-    artist_id_list[my_messages[0]['artist_id']] = my_messages # TODO создай класс
-    bot.send_message(message.chat.id, my_messages[0]['text'], parse_mode='Markdown',
-     disable_web_page_preview = True,
-     reply_markup = pages_keyboard(0, my_messages[0]['artist_id'])) #нулевая страница
-    bot.send_message(message.chat.id, my_messages[0]['photo'], parse_mode='Markdown',
-     disable_notification = True)
+    try:
+        my_messages = bit.create_message(events)
+        artist_id_list[my_messages[0]['artist_id']] = my_messages
+    except:
+        logging.error("Ooops")
+        bot.send_message(message.chat.id, 'try again')
+        return
+    else:
+         # TODO создай класс
+        bot.send_message(message.chat.id, my_messages[0]['text'], parse_mode='Markdown',
+            disable_web_page_preview = True,
+            reply_markup = pages_keyboard(0, my_messages[0]['artist_id'])) #нулевая страница
+        bot.send_message(message.chat.id, my_messages[0]['photo'], parse_mode='Markdown',
+            disable_notification = True)
 
 
 def pages_keyboard(page, artist_id): #создаем кнопки для листания блоков информации
@@ -125,12 +196,20 @@ def pages_keyboard(page, artist_id): #создаем кнопки для лис�
     keyboard.add(*btns)
     return keyboard # возвращаем объект клавиатуры
 
+#@bot.callback_query_handler(func=lambda call: True)
+##def callback_inline(call):
+  #  call.message.text = '/genre ' + call.data
+   # event_search_by_genre(call.message)
+
 @bot.callback_query_handler(func = lambda call: call.data)  
 def pages(call): #Обрабатываем нажатия кнопок
-    arrow   = call.data.split('_')[0]
-    page    = call.data.split('_')[1]
-    artist  = call.data.split('_')[2]
-    if arrow == left_arrow or right_arrow:
+    arrow = call.data.split('_')[0]
+    if call.data[:5] == 'genre': #Обработка жанров
+        call.message.text = '/genre ' + call.data[5:]
+        event_search_by_genre(call.message)
+    if (arrow == left_arrow) or (arrow == right_arrow): #Обработка стрелок
+        page    = call.data.split('_')[1]
+        artist  = call.data.split('_')[2]
         bot.edit_message_text(
             chat_id = call.message.chat.id,
             message_id = call.message.message_id,
@@ -138,7 +217,7 @@ def pages(call): #Обрабатываем нажатия кнопок
             parse_mode = 'Markdown', 
             reply_markup = pages_keyboard(int(page),int(artist)),
             disable_web_page_preview = True)
-        
+
 #my_messages = bit.create_message(events)
 #for my_message in my_messages:
 #     bot.send_message(message.chat.id, my_message['text'], parse_mode='Markdown', disable_web_page_preview = True)

@@ -7,7 +7,7 @@ def get_by_genre(genre):
     default = {
         'api_key': API,
         'genre': genre,
-        'limit': 10
+        'limit': 5
     }
 
     data = requests.get(URL, params=default).json()
