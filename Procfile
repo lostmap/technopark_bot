@@ -1,1 +1,1 @@
-web: python telega.py
+web: python telega.p
