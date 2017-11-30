@@ -1,8 +1,7 @@
-# Instantiate client with your app id (this can be anything)
-
 import telega
 
 from bandsintown import Client
+# Instantiate client with your app id (this can be anything)
 client = Client('technopark_ruliiiit')
 
 pushpin = u'\U0001F4CC' #pushpin emoji
