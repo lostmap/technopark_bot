@@ -16,7 +16,7 @@ from bandsintown import Client
 client = Client('technopark_ruliiiit')
 
 
-token = '460978562:AAGf9KzIv2RQuBQ-nwDpWnm2D3BYy8IB5rw'
+token = '419104336:AAEEFQD2ipnAv9B4ti-UZogq-9wGi9wYpfA'
 bot = telebot.TeleBot(token)
 
 import logging
