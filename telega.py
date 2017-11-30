@@ -1,24 +1,18 @@
 import telebot
 from telebot import types
-import requests
-import urllib
 from telebot.types import MessageEntity
-
-import mymusicgraph as mg
-
-import mybandsintown as bit
-
-import sqlite3
-
-from urllib.request import Request
-
-from bandsintown import Client
-client = Client('technopark_ruliiiit')
-
 
 token = '419104336:AAEEFQD2ipnAv9B4ti-UZogq-9wGi9wYpfA'
 bot = telebot.TeleBot(token)
 
+import mymusicgraph as mg
+import mybandsintown as bit
+from bandsintown import Client
+
+client = Client('technopark_ruliiiit')
+
+import requests
+import sqlite3
 import logging
 
 logging.basicConfig(format = u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(asctime)s]  %(message)s',
