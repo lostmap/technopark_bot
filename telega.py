@@ -2,7 +2,7 @@ import telebot
 from telebot import types
 from telebot.types import MessageEntity
 
-token = '460978562:AAGf9KzIv2RQuBQ-nwDpWnm2D3BYy8IB5rw'
+token = '419104336:AAEEFQD2ipnAv9B4ti-UZogq-9wGi9wYpfA'
 bot = telebot.TeleBot(token)
 
 import mymusicgraph as mg
@@ -219,6 +219,8 @@ def pages(call): #Обрабатываем нажатия кнопок
     if (arrow == left_arrow) or (arrow == right_arrow): #Обработка стрелок
         page    = call.data.split('_')[1]
         artist  = call.data.split('_')[2]
+        if not limiter.can_send_to(call.message.chat.id):
+            return
         bot.edit_message_text(
             chat_id = call.message.chat.id,
             message_id = call.message.message_id,

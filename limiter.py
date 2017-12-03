@@ -18,3 +18,4 @@ class RateLimiter:
         if diff <= 1:
             return False
         self.users[chat_id] = now
+        return True
