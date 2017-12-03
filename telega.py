@@ -2,7 +2,7 @@ import telebot
 from telebot import types
 from telebot.types import MessageEntity
 
-token = '419104336:AAEEFQD2ipnAv9B4ti-UZogq-9wGi9wYpfA'
+token = '460978562:AAGf9KzIv2RQuBQ-nwDpWnm2D3BYy8IB5rw'
 bot = telebot.TeleBot(token)
 
 import mymusicgraph as mg
@@ -12,6 +12,7 @@ from bandsintown import Client
 client = Client('technopark_ruliiiit')
 
 import requests
+import time
 import sqlite3
 import logging
 
@@ -20,6 +21,10 @@ logging.basicConfig(format = u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%
 
 left_arrow  = u'\U00002B05' #right emoji
 right_arrow = u'\U000027A1' #left emoji
+
+from limiter import RateLimiter
+
+limiter = RateLimiter()
 
 artist_id_list = {}
 
@@ -183,7 +188,7 @@ def artist_search(message):
         logging.error("Ooops. No " + message.text + " artist")
         bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
     else:
-       message_to_bandsintown(message, my_messages)
+        message_to_bandsintown(message, my_messages)
 
 
 def pages_keyboard(page, artist_id): #создаем кнопки для листания блоков информации
