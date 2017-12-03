@@ -64,7 +64,6 @@ def artist_search(message):
     else:
         bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
 
-# TODO FIX GENRE
 """
 @bot.message_handler(commands=['genre'])
 def event_search_by_genre(message):
@@ -80,7 +79,7 @@ def event_search_by_genre(message):
                 reply_markup = pages_keyboard(0, my_messages[0]['artist_id'])) #нулевая страница
             bot.send_message(message.chat.id, my_messages[0]['photo'], parse_mode='Markdown',
                 disable_notification = True)
-# TODO FIX GENRE 
+"""
 """
 @bot.message_handler(commands=['genre'])
 def event_search_by_genre(message):
@@ -103,13 +102,7 @@ def event_search_by_genre(message):
                     bot.send_message(message.chat.id, 'try again')
                     return
                 else:
-                    bot.send_message(message.chat.id, my_messages[0]['text'],
-                        parse_mode='Markdown',
-                        disable_web_page_preview = True,
-                        reply_markup = pages_keyboard(0, my_messages[0]['artist_id'])) #нулевая страница
-                    bot.send_message(message.chat.id, my_messages[0]['photo'],
-                        parse_mode='Markdown',
-                        disable_notification = True)
+                    message_to_bandsintown(message, my_messages)
         else:
             my_artists = mg.get_by_genre(params[0])
             bot.send_message(message.chat.id, "\n".join(my_artists))
@@ -123,15 +116,40 @@ def event_search_by_genre(message):
                     bot.send_message(message.chat.id, 'try again')
                     return
                 else:
-                    bot.send_message(message.chat.id, my_messages[0]['text'],
+                    message_to_bandsintown(message, my_messages)
+"""
+def message_to_bandsintown(message, my_messages):
+    bot.send_message(message.chat.id, my_messages[0]['text'],
                         parse_mode='Markdown',
                         disable_web_page_preview = True,
                         reply_markup = pages_keyboard(0, my_messages[0]['artist_id'])) #нулевая страница
-                    bot.send_message(message.chat.id, my_messages[0]['photo'],
+    bot.send_message(message.chat.id, my_messages[0]['photo'],
                         parse_mode='Markdown',
                         disable_notification = True)
 
-
+@bot.message_handler(commands=['genre'])
+def event_search_by_genre(message):
+    if len(message.text) == 6:
+        genre_buttons(message)
+    else:
+        genre = message.text[7:]
+        try:
+            my_artists = mg.get_by_genre(genre)
+        except:
+            logging.error("Oooops. " + genre + " is invalid genre")
+            bot.send_message(message.chat.id, 'Такого жанра нет')
+        else:
+            bot.send_message(message.chat.id, "\n".join(my_artists))
+            for artist in my_artists:
+                events = client.events(artist)
+                try:
+                    my_messages = bit.create_message(events)
+                    artist_id_list[my_messages[0]['artist_id']] = my_messages
+                except:
+                    logging.error("Oooops. No " + artist + " concert")
+                    bot.send_message(message.chat.id, 'У ' + artist + ' нет ближайших концертов')
+                else:
+                    message_to_bandsintown(message, my_messages)
 
 def genre_buttons(message): #кнопка для жанров
     keyboard = types.InlineKeyboardMarkup()
@@ -139,7 +157,6 @@ def genre_buttons(message): #кнопка для жанров
                                                                                                'genreJazz', 'genreSoul/R&B', 'genreBlues',
                                                                                               'genreRap/Hip Hop', 'genreFolk']])
     bot.send_message(message.chat.id, "Какой жанр выберешь?", reply_markup=keyboard)
-
 
 # @bot.message_handler(commands=['date'])
 # def date_search(message):
@@ -159,21 +176,14 @@ def artist_search(message):
         events = client.search(params[0].strip(), location=params[1].strip())
     else:
         events = client.events(params[0])
-    #print(events)
     try:
         my_messages = bit.create_message(events)
         artist_id_list[my_messages[0]['artist_id']] = my_messages
     except:
-        logging.error("Ooops")
-        bot.send_message(message.chat.id, 'try again')
-        return
+        logging.error("Ooops. No " + message.text + " artist")
+        bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
     else:
-         # TODO создай класс
-        bot.send_message(message.chat.id, my_messages[0]['text'], parse_mode='Markdown',
-            disable_web_page_preview = True,
-            reply_markup = pages_keyboard(0, my_messages[0]['artist_id'])) #нулевая страница
-        bot.send_message(message.chat.id, my_messages[0]['photo'], parse_mode='Markdown',
-            disable_notification = True)
+       message_to_bandsintown(message, my_messages)
 
 
 def pages_keyboard(page, artist_id): #создаем кнопки для листания блоков информации
@@ -223,9 +233,6 @@ def pages(call): #Обрабатываем нажатия кнопок
 #     my_messages = bit.create_message(events)
 #     for my_message in my_messages:
 #         bot.send_message(message.chat.id, my_message)
-
-
-
 
 if __name__ == '__main__':
 
