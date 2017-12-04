@@ -5,7 +5,7 @@ from telebot.types import MessageEntity
 token = '419104336:AAEEFQD2ipnAv9B4ti-UZogq-9wGi9wYpfA'
 bot = telebot.TeleBot(token)
 
-from geolocation.main import GoogleMaps
+#from geolocation.main import GoogleMaps
 
 import mymusicgraph as mg
 import mybandsintown as bit
