@@ -15,7 +15,7 @@ class RateLimiter:
 
         # 1 message per second 
         diff = now - self.users[chat_id]
-        if diff <= 1:
+        if diff <= 1.1:
             return False
         self.users[chat_id] = now
         return True
