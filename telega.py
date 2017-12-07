@@ -8,10 +8,6 @@ token = '419104336:AAEEFQD2ipnAv9B4ti-UZogq-9wGi9wYpfA'
 
 bot = telebot.TeleBot(token)
 
-<<<<<<< HEAD
-#   from geolocation.main import GoogleMaps
-=======
->>>>>>> dlipko
 
 import mymusicgraph as mg
 import mybandsintown as bit
@@ -37,9 +33,7 @@ left_arrow = u'\U00002B05'
 # left emoji
 right_arrow = u'\U000027A1'
 
-import urllib
 from limiter import RateLimiter
-from urllib.request import Request
 
 limiter = RateLimiter()
 
@@ -65,16 +59,10 @@ def message_to_bandsintown(message, my_messages):
     if not limiter.can_send_to(message.chat.id):
         time.sleep(1)
     bot.send_message(message.chat.id, my_messages[0]['text'],
-<<<<<<< HEAD
-                        parse_mode='Markdown',
-                        disable_web_page_preview = True,
-                        reply_markup = pages_keyboard(0, my_messages[0]['artist_id'])) #нулевая страница
-=======
                      parse_mode='Markdown',
                      disable_web_page_preview=True,
                      # нулевая страница
                      reply_markup=pages_keyboard(0, my_messages[0]['artist_id']))
->>>>>>> dlipko
     if not limiter.can_send_to(message.chat.id):
         time.sleep(1)
     bot.send_message(message.chat.id, my_messages[0]['photo'],
@@ -172,17 +160,11 @@ def artist_search(message):
 # кнопка для жанров
 def genre_buttons(message):
     keyboard = types.InlineKeyboardMarkup()
-<<<<<<< HEAD
-    keyboard.add(*[types.InlineKeyboardButton(text=genre[5:], callback_data=genre) for genre in ['genreRock', 'genreAlternative/Indie', 'genrePop',
-                                                                                               'genreJazz', 'genreSoul/R&B', 'genreBlues',
-                                                                                              'genreRap/Hip Hop', 'genreFolk']])
-=======
     keyboard.add(*[types.InlineKeyboardButton(text=genre[5:], callback_data=genre)
                    for genre in ['genreRock', 'genreAlternative/Indie', 'genrePop',
                                  'genreJazz', 'genreSoul/R&B', 'genreBlues',
                                 'genreRap/Hip Hop', 'genreFolk']])
 
->>>>>>> dlipko
     if not limiter.can_send_to(message.chat.id):
         time.sleep(1)
     bot.send_message(message.chat.id, "Какой жанр выберешь?", reply_markup=keyboard)
@@ -205,14 +187,8 @@ def artist_search(message):
         bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
     else:
         message_to_bandsintown(message, my_messages)
-<<<<<<< HEAD
-        #music = open('out.m4a','rb')
-        #bot.send_audio(message.chat.id, music, performer='Deuce', title='How I Cum')
-
-=======
         # music = open('out.m4a','rb')
         # bot.send_audio(message.chat.id, music, performer='Deuce', title='How I Cum')
->>>>>>> dlipko
 
 
 # создаем кнопки для листания блоков информации
@@ -258,14 +234,6 @@ def pages(call):
         if not limiter.can_send_to(call.message.chat.id):
             return
         bot.edit_message_text(
-<<<<<<< HEAD
-            chat_id = call.message.chat.id,
-            message_id = call.message.message_id,
-            text = artist_id_list[int(artist)][int(page)]['text'],
-            parse_mode = 'Markdown', 
-            reply_markup = pages_keyboard(int(page),int(artist)),
-            disable_web_page_preview = True)
-=======
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
             text=artist_id_list[int(artist)][int(page)]['text'],
@@ -273,7 +241,6 @@ def pages(call):
             reply_markup=pages_keyboard(int(page), int(artist)),
             disable_web_page_preview=True)
 
->>>>>>> dlipko
 
 if __name__ == '__main__':
 
