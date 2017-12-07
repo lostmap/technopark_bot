@@ -1,11 +1,17 @@
 import telebot
 from telebot import types
-from telebot.types import MessageEntity
+
 
 token = '419104336:AAEEFQD2ipnAv9B4ti-UZogq-9wGi9wYpfA'
+# token = '403882463:AAGFabioSaA1uY5Iku7v-lXVJegeIoP-J3E'
+# token = '460978562:AAGf9KzIv2RQuBQ-nwDpWnm2D3BYy8IB5rw'
+
 bot = telebot.TeleBot(token)
 
+<<<<<<< HEAD
 #   from geolocation.main import GoogleMaps
+=======
+>>>>>>> dlipko
 
 import mymusicgraph as mg
 import mybandsintown as bit
@@ -13,16 +19,23 @@ from bandsintown import Client
 
 client = Client('technopark_ruliiiit')
 
-import requests
 import time
-import sqlite3
 import logging
 
-logging.basicConfig(format = u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(asctime)s]  %(message)s',
+# импорт peewee для бд
+import peeweedb as pw
+
+# создание таблиц
+pw.add_tables()
+
+logging.basicConfig(format=u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(asctime)s]  %(message)s',
                     filename="sample.log", level=logging.INFO)
 
-left_arrow  = u'\U00002B05' #right emoji
-right_arrow = u'\U000027A1' #left emoji
+# right emoji
+left_arrow = u'\U00002B05'
+
+# left emoji
+right_arrow = u'\U000027A1'
 
 import urllib
 from limiter import RateLimiter
@@ -46,18 +59,36 @@ def test(message):
     my_location = location.first()
     print(my_location)
 """
+
+
 def message_to_bandsintown(message, my_messages):
     if not limiter.can_send_to(message.chat.id):
         time.sleep(1)
     bot.send_message(message.chat.id, my_messages[0]['text'],
+<<<<<<< HEAD
                         parse_mode='Markdown',
                         disable_web_page_preview = True,
                         reply_markup = pages_keyboard(0, my_messages[0]['artist_id'])) #нулевая страница
+=======
+                     parse_mode='Markdown',
+                     disable_web_page_preview=True,
+                     # нулевая страница
+                     reply_markup=pages_keyboard(0, my_messages[0]['artist_id']))
+>>>>>>> dlipko
     if not limiter.can_send_to(message.chat.id):
         time.sleep(1)
     bot.send_message(message.chat.id, my_messages[0]['photo'],
-                        parse_mode='Markdown',
-                        disable_notification = True)
+                     parse_mode='Markdown',
+                     disable_notification=True)
+
+
+@bot.message_handler(commands=['start'])
+def start(message):
+    # get user id from message
+    user_id = message.from_user.id
+    # add user to db
+    pw.add_user(user_id)
+
 
 @bot.message_handler(commands=['genre'])
 def event_search_by_genre(message):
@@ -89,11 +120,69 @@ def event_search_by_genre(message):
                 else:
                     message_to_bandsintown(message, my_messages)
 
-def genre_buttons(message): #кнопка для жанров
+
+@bot.message_handler(commands=['fan_of'])
+def artist_search(message):
+    artist_name = message.text[7:].strip()
+    artist_request = client.get(artist_name)
+    if 'errors' not in artist_request:
+        artist_id = artist_request['id']
+        user_id = message.from_user.id
+        artist_name = artist_request['name']
+        events = client.events(artist_name)
+        pw.add_relation(user_id, artist_id, artist_name, events)
+        bot.send_message(message.chat.id, artist_name + ' добавлен в список избранных')
+    else:
+        bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
+
+
+# отправляет пользователю список избранных артистов
+@bot.message_handler(commands=['favorites'])
+def artist_search(message):
+    artists = pw.get_relations(message.chat.id)
+    artist_message = ""
+
+    if artists:
+        i = 1
+        for artist in artists:
+            artist_message += str(i) + ") " + artist + "\n"
+            i += 1
+    else:
+        artist_message = 'Список избранных исполнителей пуст'
+
+    bot.send_message(message.chat.id, artist_message, parse_mode='Markdown')
+
+
+@bot.message_handler(commands=['del'])
+def artist_search(message):
+    artist_name = message.text[4:].strip()
+    artist_request = client.get(artist_name)
+    if 'errors' not in artist_request:
+        artist_id = artist_request['id']
+        user_id = message.from_user.id
+        artist_name = artist_request['name']
+        result = pw.del_relation(user_id, artist_id)
+        if result:
+            bot.send_message(message.chat.id, artist_name + ' удален из списка избранных')
+        else:
+            bot.send_message(message.chat.id, artist_name + ' отсутсвует в списке избранных')
+    else:
+        bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
+
+# кнопка для жанров
+def genre_buttons(message):
     keyboard = types.InlineKeyboardMarkup()
+<<<<<<< HEAD
     keyboard.add(*[types.InlineKeyboardButton(text=genre[5:], callback_data=genre) for genre in ['genreRock', 'genreAlternative/Indie', 'genrePop',
                                                                                                'genreJazz', 'genreSoul/R&B', 'genreBlues',
                                                                                               'genreRap/Hip Hop', 'genreFolk']])
+=======
+    keyboard.add(*[types.InlineKeyboardButton(text=genre[5:], callback_data=genre)
+                   for genre in ['genreRock', 'genreAlternative/Indie', 'genrePop',
+                                 'genreJazz', 'genreSoul/R&B', 'genreBlues',
+                                'genreRap/Hip Hop', 'genreFolk']])
+
+>>>>>>> dlipko
     if not limiter.can_send_to(message.chat.id):
         time.sleep(1)
     bot.send_message(message.chat.id, "Какой жанр выберешь?", reply_markup=keyboard)
@@ -116,48 +205,75 @@ def artist_search(message):
         bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
     else:
         message_to_bandsintown(message, my_messages)
+<<<<<<< HEAD
         #music = open('out.m4a','rb')
         #bot.send_audio(message.chat.id, music, performer='Deuce', title='How I Cum')
 
+=======
+        # music = open('out.m4a','rb')
+        # bot.send_audio(message.chat.id, music, performer='Deuce', title='How I Cum')
+>>>>>>> dlipko
 
 
-def pages_keyboard(page, artist_id): #создаем кнопки для листания блоков информации
+# создаем кнопки для листания блоков информации
+def pages_keyboard(page, artist_id):
     keyboard = types.InlineKeyboardMarkup()
     btns = []
-    if page > 0: btns.append(types.InlineKeyboardButton(
-        text = left_arrow, callback_data = '{arrow}_{page}_{artist}'.format(arrow = left_arrow,
-            page = page - 1,
-            artist = artist_id)))
+    if page > 0:
+        btns.append(types.InlineKeyboardButton(text=left_arrow, callback_data='{arrow}_{page}_{artist}'.format(
+            arrow=left_arrow,
+            page=page - 1,
+            artist=artist_id)))
+
     if page < len(artist_id_list[artist_id]) - 1: btns.append(types.InlineKeyboardButton(
-        text = right_arrow, callback_data = '{arrow}_{page}_{artist}'.format(arrow = right_arrow,
-            page = page + 1,
-            artist = artist_id)))
+        text=right_arrow, callback_data='{arrow}_{page}_{artist}'.format(
+            arrow=right_arrow,
+            page=page + 1,
+            artist=artist_id)))
     keyboard.add(*btns)
-    return keyboard # возвращаем объект клавиатуры
+
+    # возвращаем объект клавиатуры
+    return keyboard
 
 #@bot.callback_query_handler(func=lambda call: True)
 ##def callback_inline(call):
   #  call.message.text = '/genre ' + call.data
    # event_search_by_genre(call.message)
 
-@bot.callback_query_handler(func = lambda call: call.data)  
-def pages(call): #Обрабатываем нажатия кнопок
+
+@bot.callback_query_handler(func=lambda call: call.data)
+def pages(call):
+    # Обрабатываем нажатия кнопок
     arrow = call.data.split('_')[0]
-    if call.data[:5] == 'genre': #Обработка жанров
+
+    # Обработка жанров
+    if call.data[:5] == 'genre':
         call.message.text = '/genre ' + call.data[5:]
         event_search_by_genre(call.message)
-    if (arrow == left_arrow) or (arrow == right_arrow): #Обработка стрелок
-        page    = call.data.split('_')[1]
-        artist  = call.data.split('_')[2]
+
+    # Обработка стрелок
+    if (arrow == left_arrow) or (arrow == right_arrow):
+        page = call.data.split('_')[1]
+        artist = call.data.split('_')[2]
         if not limiter.can_send_to(call.message.chat.id):
             return
         bot.edit_message_text(
+<<<<<<< HEAD
             chat_id = call.message.chat.id,
             message_id = call.message.message_id,
             text = artist_id_list[int(artist)][int(page)]['text'],
             parse_mode = 'Markdown', 
             reply_markup = pages_keyboard(int(page),int(artist)),
             disable_web_page_preview = True)
+=======
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            text=artist_id_list[int(artist)][int(page)]['text'],
+            parse_mode='Markdown',
+            reply_markup=pages_keyboard(int(page), int(artist)),
+            disable_web_page_preview=True)
+
+>>>>>>> dlipko
 
 if __name__ == '__main__':
 
