@@ -14,8 +14,8 @@ import peeweedb as pw
 import mymusicgraph as mg
 import mybandsintown as bit
 
-token = '419104336:AAEEFQD2ipnAv9B4ti-UZogq-9wGi9wYpfA'
-#token = '403882463:AAGFabioSaA1uY5Iku7v-lXVJegeIoP-J3E'
+# token = '419104336:AAEEFQD2ipnAv9B4ti-UZogq-9wGi9wYpfA'
+token = '403882463:AAGFabioSaA1uY5Iku7v-lXVJegeIoP-J3E'
 bot = telebot.TeleBot(token)
 google_maps = GoogleMaps(api_key='AIzaSyCd9HpQnS40Bl2E1OxQBxJp8vmcP6PXpLo')
 client = Client('technopark_ruliiiit')
@@ -128,10 +128,49 @@ def search_by_artist(message):
 @bot.message_handler(regexp='Search by genre')
 def genre(message):
     keyboard = types.ReplyKeyboardMarkup()
-    keyboard.add(*[types.KeyboardButton(genre) for genre in ['Rock', 'Alternative/Indie', 'Pop', 'Jazz', 'Soul/R&B',
-                                                             'Blues', 'Rap/Hip Hop', 'Folk']])
-    msg = bot.send_message(message.chat.id, "Chose genre", reply_markup=keyboard)
+    keyboard.add(*[types.KeyboardButton(genre) for genre in ['Rock', 'Electronic', 'Pop', 'Black',
+                                                             'Rap/Hip Hop', 'Others']])
+    bot.send_message(message.chat.id, "Chose style", reply_markup=keyboard)
+
+
+
+@bot.message_handler(regexp='Rock')
+def style(message):
+    keyboard = types.ReplyKeyboardMarkup()
+    keyboard.add(*[types.KeyboardButton(genre) for genre in ['Rock', 'Metal', 'Alternative/Indie',
+                                                             'Pop Rock', "90's Rock"]])
+    msg = bot.send_message(message.chat.id, "Chose style", reply_markup=keyboard)
     bot.register_next_step_handler(msg, search_by_genre)
+
+
+
+@bot.message_handler(regexp='Electronic')
+def style(message):
+    keyboard = types.ReplyKeyboardMarkup()
+    keyboard.add(*[types.KeyboardButton(genre) for genre in ['Electronica/Dance', 'Techno', "Drum n' Bass",
+                                                             'Tropical']])
+    msg = bot.send_message(message.chat.id, "Chose style", reply_markup=keyboard)
+    bot.register_next_step_handler(msg, search_by_genre)
+
+@bot.message_handler(regexp='Black')
+def style(message):
+    keyboard = types.ReplyKeyboardMarkup()
+    keyboard.add(*[types.KeyboardButton(genre) for genre in ['Soul/R&B', 'Jazz', 'Blues', 'Swing',
+                                                             'New Age' ]])
+    msg = bot.send_message(message.chat.id, "Chose style", reply_markup=keyboard)
+    bot.register_next_step_handler(msg, search_by_genre)
+
+
+@bot.message_handler(regexp='Others')
+def style(message):
+    keyboard = types.ReplyKeyboardMarkup()
+    keyboard.add(*[types.KeyboardButton(genre) for genre in ['Country',  'Folk', 'Instrumental',
+                                                             'Latin', 'Reggae/Ska']])
+    msg = bot.send_message(message.chat.id, "Chose style", reply_markup=keyboard)
+    bot.register_next_step_handler(msg, search_by_genre)
+
+
+
 
 
 def search_by_genre(message):
@@ -243,6 +282,22 @@ def artist_search(message):
             bot.send_message(message.chat.id, artist_name + ' отсутсвует в списке избранных')
     else:
         bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
+
+
+@bot.message_handler(commands=['snip'])
+def snippet_search(message):
+    artist_name = message.text[5:].strip()
+    datas = requests.get("https://itunes.apple.com/search?term="+ artist_name +"&entity=musicTrack&limit=3").json()['results']
+    if datas:
+        for data in datas:
+            response = requests.get(data['previewUrl'])
+            with open('out.m4a', 'wb') as f:
+                f.write(response.content)
+            music = open('out.m4a','rb')
+            bot.send_audio(message.chat.id, music, performer=data['artistName'], title=data['trackName'])
+    else:
+        bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
+
 
 
 if __name__ == '__main__':
