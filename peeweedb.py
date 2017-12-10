@@ -34,6 +34,7 @@ def add_user(chat_id, city):
 
     user = User.select().where(User.chat_id == chat_id)
     if user:
+        user = User.get(User.chat_id == chat_id)
         user.city = city
         user.save()
     else:
@@ -45,9 +46,6 @@ def add_artist(b_in_t_id, name, information):
     artist = Artist.select().where(Artist.b_in_t_id == b_in_t_id)
     if not artist:
         Artist.create(b_in_t_id=b_in_t_id, name=name, information=information)
-    else:
-        artist.information = information
-        artist.save()
 
 
 def add_relation(chat_id, artist_b_in_t_id, artist_name, events):
@@ -90,6 +88,12 @@ def is_exist(chat_id):
     return user
 
 
+def is_artist_exist(b_i_t_id):
+    artist = Artist.select().where(Artist.b_in_t_id == b_i_t_id)
+    if artist:
+        return artist.dicts().get()['information']
+
+
 def get_city(chat_id):
     user = User.select().where(User.chat_id == chat_id)
     return user.dicts().get()['city']
@@ -126,8 +130,16 @@ if __name__ == "__main__":
     for user in User.select():
         print(user.id, " ", user.chat_id, " ", user.city)
 
+
+    add_user(179371682, "Riga")
+
+
+
+    for user in User.select():
+        print(user.id, " ", user.chat_id, " ", user.city)
+
     # for artist in Artist.select():
-    #     print(artist.id, " ", artist.b_in_t_id," ", artist.information)
+    #     print(artist.id, " ", artist.b_in_t_id, " ", artist.information)
 
     # # show relations
     # for relation in Relation.select():
