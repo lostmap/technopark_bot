@@ -1,9 +1,9 @@
 import telebot
 from telebot import types
-from telebot.types import MessageEntity
+
 from geolocation.main import GoogleMaps
 import requests
-import time
+
 import logging
 from bandsintown import Client
 from limiter import RateLimiter
@@ -14,13 +14,20 @@ import peeweedb as pw
 import mymusicgraph as mg
 import mybandsintown as bit
 
-# token = '419104336:AAEEFQD2ipnAv9B4ti-UZogq-9wGi9wYpfA'
-token = '403882463:AAGFabioSaA1uY5Iku7v-lXVJegeIoP-J3E'
+# concertMusicBot
+token = '419104336:AAEEFQD2ipnAv9B4ti-UZogq-9wGi9wYpfA'
+
+# Черновичок
+#token = '403882463:AAGFabioSaA1uY5Iku7v-lXVJegeIoP-J3E'
+
+# lostMapMusicBot
+# token = '460978562:AAGf9KzIv2RQuBQ-nwDpWnm2D3BYy8IB5rw'
+
 bot = telebot.TeleBot(token)
 google_maps = GoogleMaps(api_key='AIzaSyCd9HpQnS40Bl2E1OxQBxJp8vmcP6PXpLo')
 client = Client('technopark_ruliiiit')
 
-logging.basicConfig(format = u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(asctime)s]  %(message)s',
+logging.basicConfig(format=u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(asctime)s]  %(message)s',
                     filename="sample.log", level=logging.INFO)
 
 limiter = RateLimiter()
@@ -74,8 +81,7 @@ def find_city_final(message):
     if message.text == 'Yes':
         options_keyboard(message)
     else:
-        user_id = message.from_user.id
-        msg = bot.send_message(message.chat.id, 'Write city again, please!')
+        msg = bot.send_message(message.from_user.id, 'Write city again, please!')
         bot.register_next_step_handler(msg, find_city)
 
 
@@ -89,9 +95,8 @@ def options_keyboard(message):
 
 @bot.message_handler(regexp='Change city')
 def change_city(message):
-    pass
-    # user_id = message.from_user.id
-    # pw.add_user(user_id, city)
+    msg = bot.send_message(message.chat.id, 'Write city, please!')
+    bot.register_next_step_handler(msg, find_city)
 
 
 @bot.message_handler(regexp='Search Artist')
@@ -108,21 +113,31 @@ def search_by_artist(message):
         user_id = message.chat.id
         artist = artist_request['name']
         city = pw.get_city(user_id)
-        events = client.search(artist, location=city)
+        if pw.is_artist_exist(artist_id):
+            events = eval(pw.get_event(artist_id))
+        else:
+            events = client.events(artist)
+            if events:
+                pw.add_artist(artist_id, artist, events)
 
         if events:
-            pw.add_artist(artist_id, artist, events)
-            my_messages = bit.create_message(events)
-            message_to_bandsintown(message, my_messages)
+            new_events = []
+            for event in events:
+                if event['venue']['city'] == city:
+                    new_events.append(event)
+            if new_events:
+                my_messages = bit.create_message(new_events)
+                message_to_bandsintown(message, my_messages)
+            else:
+                bot.send_message(message.chat.id, 'У ' + artist + ' нет ближайших концертов в ' + city)
         else:
-            city = pw.get_city(user_id)
             logging.error("Oooops. No " + artist + " concert")
-            bot.send_message(message.chat.id, 'У ' + artist + ' нет ближайших концертов в ' + city)
-
-        options_keyboard(message)
+            bot.send_message(message.chat.id, 'У ' + artist + ' нет ближайших концертов')
 
     else:
         bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
+
+    options_keyboard(message)
 
 
 @bot.message_handler(regexp='Search by genre')
@@ -131,7 +146,6 @@ def genre(message):
     keyboard.add(*[types.KeyboardButton(genre) for genre in ['Rock', 'Electronic', 'Pop', 'Black',
                                                              'Rap/Hip Hop', 'Others']])
     bot.send_message(message.chat.id, "Chose style", reply_markup=keyboard)
-
 
 
 @bot.message_handler(regexp='Rock')
@@ -143,7 +157,6 @@ def style(message):
     bot.register_next_step_handler(msg, search_by_genre)
 
 
-
 @bot.message_handler(regexp='Electronic')
 def style(message):
     keyboard = types.ReplyKeyboardMarkup()
@@ -151,6 +164,7 @@ def style(message):
                                                              'Tropical']])
     msg = bot.send_message(message.chat.id, "Chose style", reply_markup=keyboard)
     bot.register_next_step_handler(msg, search_by_genre)
+
 
 @bot.message_handler(regexp='Black')
 def style(message):
@@ -170,10 +184,8 @@ def style(message):
     bot.register_next_step_handler(msg, search_by_genre)
 
 
-
-
-
 def search_by_genre(message):
+
     genre = message.text
     try:
         my_artists = mg.get_by_genre(genre)
@@ -186,7 +198,7 @@ def search_by_genre(message):
             user_id = message.from_user.id
             city = pw.get_city(user_id)
             events = client.search(artist, location=city)
-            if events:
+            if events and 'errors' not in events:
                 my_messages = bit.create_message(events)
                 message_to_bandsintown(message, my_messages)
             else:
@@ -202,7 +214,8 @@ def similar(message):
 
 
 def search_by_similar(message):
-    pass  # TODO Опять работа с бд
+
+    mg.get_similar_artists(message)
 
 
 # right emoji
@@ -221,12 +234,13 @@ def message_to_bandsintown(message, my_messages):
                      disable_notification=True)
 
 
-def pages_keyboard(page, artist_id):# создаем кнопки для листания блоков информации
+# создаем кнопки для листания блоков информации
+def pages_keyboard(page, artist_id):
     keyboard = types.InlineKeyboardMarkup()
     btns = []
     if page > 0: btns.append(types.InlineKeyboardButton(
         text=left_arrow, callback_data='{arrow}_{page}_{artist}'.format(arrow=left_arrow,
-        page=page - 1, artist=artist_id)))
+                                                                        page=page - 1, artist=artist_id)))
     # if page < len(artist_id_list[artist_id]) - 1: btns.append(types.InlineKeyboardButton(
     #     text = right_arrow, callback_data = '{arrow}_{page}_{artist}'.format(arrow = right_arrow,
     #         page = page + 1,
@@ -288,7 +302,6 @@ def artist_search(message):
 def preview(message):
     msg = bot.send_message(message.chat.id, 'Write artist, please')
     bot.register_next_step_handler(msg, snippet_search)
-
 
 
 def snippet_search(message):

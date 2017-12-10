@@ -4,13 +4,13 @@ from bandsintown import Client
 # Instantiate client with your app id (this can be anything)
 client = Client('technopark_ruliiiit')
 
-pushpin = u'\U0001F4CC' #pushpin emoji
+pushpin = u'\U0001F4CC'
+
 
 def create_message(events): 
-    messages = list() #массив сообщений
+    messages = list()
     if events:
         message = {'artist_id': 0, 'text': '', 'photo': ''}
-
         if events[0]['artists'][0]['name']:
                 message['text'] += "Artist: " + events[0]['artists'][0]['name'] + "\n\n"
         

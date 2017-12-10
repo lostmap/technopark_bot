@@ -15,7 +15,6 @@ def get_by_genre(genre):
     data = requests.get(URL, params=default).json()
     artists = data['data']
     artists_name = []
-    print(artists)
     for i in range(5):
         artists_name.append(random.choice(artists)['name'])
     return artists_name
