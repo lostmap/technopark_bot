@@ -82,7 +82,7 @@ def find_city_final(message):
 def options_keyboard(message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     keyboard.add(*[types.KeyboardButton(name) for name in ['Change city', 'Search Artist', 'Search by genre',
-                                                           'Search by similar']])
+                                                           'Search by similar', 'Preview']])
     #TODO лучше эту штуку сделать колбеком, чтобы не писалось каждый раз это тупое сообщение
     bot.send_message(message.chat.id, 'Ну хотя бы не крашнулся!', reply_markup=keyboard)
 
@@ -284,9 +284,15 @@ def artist_search(message):
         bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
 
 
-@bot.message_handler(commands=['snip'])
+@bot.message_handler(regexp='Preview')
+def preview(message):
+    msg = bot.send_message(message.chat.id, 'Write artist, please')
+    bot.register_next_step_handler(msg, snippet_search)
+
+
+
 def snippet_search(message):
-    artist_name = message.text[5:].strip()
+    artist_name = message.text
     datas = requests.get("https://itunes.apple.com/search?term="+ artist_name +"&entity=musicTrack&limit=3").json()['results']
     if datas:
         for data in datas:
@@ -294,7 +300,8 @@ def snippet_search(message):
             with open('out.m4a', 'wb') as f:
                 f.write(response.content)
             music = open('out.m4a','rb')
-            bot.send_audio(message.chat.id, music, performer=data['artistName'], title=data['trackName'])
+            bot.send_audio(message.chat.id, music, performer=data['artistName'], duration=data["trackTimeMillis"] / 1000,
+                           title=data['trackName'])
     else:
         bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
 
