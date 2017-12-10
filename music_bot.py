@@ -8,12 +8,14 @@ import logging
 from bandsintown import Client
 from limiter import RateLimiter
 
+# импорт peewee для бд
+import peeweedb as pw
 
 import mymusicgraph as mg
 import mybandsintown as bit
 
-# token = '419104336:AAEEFQD2ipnAv9B4ti-UZogq-9wGi9wYpfA'
-token = '403882463:AAGFabioSaA1uY5Iku7v-lXVJegeIoP-J3E'
+token = '419104336:AAEEFQD2ipnAv9B4ti-UZogq-9wGi9wYpfA'
+#token = '403882463:AAGFabioSaA1uY5Iku7v-lXVJegeIoP-J3E'
 bot = telebot.TeleBot(token)
 google_maps = GoogleMaps(api_key='AIzaSyCd9HpQnS40Bl2E1OxQBxJp8vmcP6PXpLo')
 client = Client('technopark_ruliiiit')
@@ -23,10 +25,15 @@ logging.basicConfig(format = u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%
 
 limiter = RateLimiter()
 
+
 @bot.message_handler(commands=['start'])
 def starting(message):
-    msg = bot.send_message(message.chat.id, 'Hello, dear music fan! What city are you from?')
-    bot.register_next_step_handler(msg, find_city)
+    user_id = message.from_user.id
+    if pw.is_exist(user_id):
+        options_keyboard(message)
+    else:
+        msg = bot.send_message(message.chat.id, 'Hello, dear music fan! What city are you from?')
+        bot.register_next_step_handler(msg, find_city)
 
 
 def find_city(message):
@@ -35,7 +42,8 @@ def find_city(message):
         location = google_maps.search(location=address)
     except:
         logging.error('City ', address, 'not found')
-        bot.send_message(message.chat.id, 'Try again')
+        msg = bot.send_message(message.chat.id, 'Try again')
+        bot.register_next_step_handler(msg, find_city)
     else:
         if location.all():
             my_location = location.first()
@@ -45,7 +53,8 @@ def find_city(message):
             if address != city:
                 yes_or_no(message, city)
             else:
-                pass  # TODO Липко добавляет город в бд
+                user_id = message.from_user.id
+                pw.add_user(user_id, city)
                 options_keyboard(message)
         else:
             msg = bot.send_message(message.chat.id, 'Write city again, please!')
@@ -56,14 +65,16 @@ def yes_or_no(message, city):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     keyboard.add(*[types.KeyboardButton(name) for name in ['Yes', 'No']])
     msg = bot.send_message(message.chat.id, 'Did you mean ' + str(city) + '?', reply_markup=keyboard)
+    user_id = message.from_user.id
+    pw.add_user(user_id, city)
     bot.register_next_step_handler(msg, find_city_final)
 
 
 def find_city_final(message):
     if message.text == 'Yes':
-        pass #TODO Липко добавляет город в бд
         options_keyboard(message)
     else:
+        user_id = message.from_user.id
         msg = bot.send_message(message.chat.id, 'Write city again, please!')
         bot.register_next_step_handler(msg, find_city)
 
@@ -73,13 +84,14 @@ def options_keyboard(message):
     keyboard.add(*[types.KeyboardButton(name) for name in ['Change city', 'Search Artist', 'Search by genre',
                                                            'Search by similar']])
     #TODO лучше эту штуку сделать колбеком, чтобы не писалось каждый раз это тупое сообщение
-    bot.send_message(message.chat.id, 'Welcome to the music world!', reply_markup=keyboard)
+    bot.send_message(message.chat.id, 'Ну хотя бы не крашнулся!', reply_markup=keyboard)
 
 
 @bot.message_handler(regexp='Change city')
 def change_city(message):
-    pass # TODO
-
+    pass
+    # user_id = message.from_user.id
+    # pw.add_user(user_id, city)
 
 
 @bot.message_handler(regexp='Search Artist')
@@ -90,16 +102,27 @@ def artist(message):
 
 def search_by_artist(message):
     artist = message.text
-    events = client.search(artist, location='Moscow, Ru')  # TODO тут надо вставить город из бд
-    print(events)
-    try:
-        my_messages = bit.create_message(events)
-    except:
-        logging.error("Oooops. No " + artist + " concert")
-        bot.send_message(message.chat.id, 'У ' + artist + ' нет ближайших концертов')
-    else:
-        message_to_bandsintown(message, my_messages)
+    artist_request = client.get(artist)
+    if 'errors' not in artist_request:
+        artist_id = artist_request['id']
+        user_id = message.chat.id
+        artist = artist_request['name']
+        city = pw.get_city(user_id)
+        events = client.search(artist, location=city)
+
+        if events:
+            pw.add_artist(artist_id, artist, events)
+            my_messages = bit.create_message(events)
+            message_to_bandsintown(message, my_messages)
+        else:
+            city = pw.get_city(user_id)
+            logging.error("Oooops. No " + artist + " concert")
+            bot.send_message(message.chat.id, 'У ' + artist + ' нет ближайших концертов в ' + city)
+
         options_keyboard(message)
+
+    else:
+        bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
 
 
 @bot.message_handler(regexp='Search by genre')
@@ -121,17 +144,16 @@ def search_by_genre(message):
     else:
         bot.send_message(message.chat.id, "\n".join(my_artists))
         for artist in my_artists:
-            events = client.search(artist, location='Moscow, Ru') # TODO тут надо вставить город из бд
-            try:
+            user_id = message.from_user.id
+            city = pw.get_city(user_id)
+            events = client.search(artist, location=city)
+            if events:
                 my_messages = bit.create_message(events)
-            except:
+                message_to_bandsintown(message, my_messages)
+            else:
                 logging.error("Oooops. No " + artist + " concert")
                 bot.send_message(message.chat.id, 'У ' + artist + ' нет ближайших концертов')
-            else:
-                message_to_bandsintown(message, my_messages)
-                options_keyboard(message)
-
-
+        options_keyboard(message)
 
 
 @bot.message_handler(regexp='Search by similar')
@@ -144,9 +166,10 @@ def search_by_similar(message):
     pass  # TODO Опять работа с бд
 
 
-
-left_arrow  = u'\U00002B05' #right emoji
-right_arrow = u'\U000027A1' #left emoji
+# right emoji
+left_arrow = u'\U00002B05'
+# left emoji
+right_arrow = u'\U000027A1'
 
 
 def message_to_bandsintown(message, my_messages):
@@ -159,7 +182,7 @@ def message_to_bandsintown(message, my_messages):
                      disable_notification=True)
 
 
-def pages_keyboard(page, artist_id): #создаем кнопки для листания блоков информации
+def pages_keyboard(page, artist_id):# создаем кнопки для листания блоков информации
     keyboard = types.InlineKeyboardMarkup()
     btns = []
     if page > 0: btns.append(types.InlineKeyboardButton(
@@ -173,8 +196,53 @@ def pages_keyboard(page, artist_id): #создаем кнопки для лис�
     return keyboard
 
 
+@bot.message_handler(commands=['fan_of'])
+def artist_search(message):
+    artist_name = message.text[7:].strip()
+    artist_request = client.get(artist_name)
+    if 'errors' not in artist_request:
+        artist_id = artist_request['id']
+        user_id = message.from_user.id
+        artist_name = artist_request['name']
+        events = client.events(artist_name)
+        pw.add_relation(user_id, artist_id, artist_name, events)
+        bot.send_message(message.chat.id, artist_name + ' добавлен в список избранных')
+    else:
+        bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
 
 
+# отправляет пользователю список избранных артистов
+@bot.message_handler(commands=['favorites'])
+def artist_search(message):
+    artists = pw.get_relations(message.chat.id)
+    artist_message = ""
+
+    if artists:
+        i = 1
+        for artist in artists:
+            artist_message += str(i) + ") " + artist + "\n"
+            i += 1
+    else:
+        artist_message = 'Список избранных исполнителей пуст'
+
+    bot.send_message(message.chat.id, artist_message, parse_mode='Markdown')
+
+
+@bot.message_handler(commands=['del'])
+def artist_search(message):
+    artist_name = message.text[4:].strip()
+    artist_request = client.get(artist_name)
+    if 'errors' not in artist_request:
+        artist_id = artist_request['id']
+        user_id = message.from_user.id
+        artist_name = artist_request['name']
+        result = pw.del_relation(user_id, artist_id)
+        if result:
+            bot.send_message(message.chat.id, artist_name + ' удален из списка избранных')
+        else:
+            bot.send_message(message.chat.id, artist_name + ' отсутсвует в списке избранных')
+    else:
+        bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
 
 
 if __name__ == '__main__':

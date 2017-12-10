@@ -30,9 +30,24 @@ class Relation(Model):
         database = db
 
 
-def add_user(chat_id):
+def add_user(chat_id, city):
 
-    User.get_or_create(chat_id=chat_id, city="moscow")
+    user = User.select().where(User.chat_id == chat_id)
+    if user:
+        user.city = city
+        user.save()
+    else:
+        User.get_or_create(chat_id=chat_id, city=city)
+
+
+def add_artist(b_in_t_id, name, information):
+
+    artist = Artist.select().where(Artist.b_in_t_id == b_in_t_id)
+    if not artist:
+        Artist.create(b_in_t_id=b_in_t_id, name=name, information=information)
+    else:
+        artist.information = information
+        artist.save()
 
 
 def add_relation(chat_id, artist_b_in_t_id, artist_name, events):
@@ -70,6 +85,21 @@ def get_relations(chat_id):
     return artists_name
 
 
+def is_exist(chat_id):
+    user = User.select().where(User.chat_id == chat_id)
+    return user
+
+
+def get_city(chat_id):
+    user = User.select().where(User.chat_id == chat_id)
+    return user.dicts().get()['city']
+
+
+def get_event(b_i_t_id):
+    artist = Artist.select().where(Artist.b_in_t_id == b_i_t_id)
+    return artist.dicts().get()['information']
+
+
 def add_tables():
 
     try:
@@ -91,10 +121,10 @@ def add_tables():
 if __name__ == "__main__":
 
     add_tables()
-    # user = User.create(chat_id=126789, city="Moscow")
+    user = User.create(chat_id=124896, city='')
 
-    # for user in User.select():
-    #     print(user.id, " ", user.chat_id)
+    for user in User.select():
+        print(user.id, " ", user.chat_id, " ", user.city)
 
     # for artist in Artist.select():
     #     print(artist.id, " ", artist.b_in_t_id," ", artist.information)
@@ -106,7 +136,7 @@ if __name__ == "__main__":
     # user = User.select().where(User.id == 1)
     # print(user.dicts().get()['id'])
 
-    # show users
-    # for artist in User.select().where(User.id == 1):
-    #     print(artist.chat_id)
-
+    # # show users
+    # for user in User.select().where(User.id == 124689):
+    #     print(user.chat_id)
+    #     print(user.city)
