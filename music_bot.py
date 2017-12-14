@@ -89,7 +89,8 @@ def find_city_final(message):
 def options_keyboard(message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     keyboard.add(*[types.KeyboardButton(name) for name in ['Change city', 'Search Artist', 'Search by genre',
-                                                           'Search by similar', 'Preview']])
+                                                           'Search by similar', 'Preview', 'Follow',
+                                                           'Show favorites', 'Delete favorites']])
     #TODO лучше эту штуку сделать колбеком, чтобы не писалось каждый раз это тупое сообщение
     bot.send_message(message.chat.id, 'Welcome to the music world!', reply_markup=keyboard)
 
@@ -250,9 +251,14 @@ def pages_keyboard(page, artist_id):
     return keyboard
 
 
-@bot.message_handler(commands=['fan_of'])
-def artist_search(message):
-    artist_name = message.text[7:].strip()
+@bot.message_handler(regexp='Follow')
+def fan_of_handler(message):
+    msg = bot.send_message(message.chat.id, 'Write artist, please')
+    bot.register_next_step_handler(msg, fan_of)
+
+
+def fan_of(message):
+    artist_name = message.text
     artist_request = client.get(artist_name)
     if 'errors' not in artist_request:
         artist_id = artist_request['id']
@@ -265,9 +271,9 @@ def artist_search(message):
         bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
 
 
-# отправляет пользователю список избранных артистов
-@bot.message_handler(commands=['favorites'])
-def artist_search(message):
+
+@bot.message_handler(regexp='Show favorites')
+def favorites(message):
     artists = pw.get_relations(message.chat.id)
     artist_message = ""
 
@@ -282,9 +288,14 @@ def artist_search(message):
     bot.send_message(message.chat.id, artist_message, parse_mode='Markdown')
 
 
-@bot.message_handler(commands=['del'])
-def artist_search(message):
-    artist_name = message.text[4:].strip()
+@bot.message_handler(regexp='Delete favorites')
+def delete_handler(message):
+    msg = bot.send_message(message.chat.id, 'Write artist, please')
+    bot.register_next_step_handler(msg, delete)
+
+
+def delete(message):
+    artist_name = message.text
     artist_request = client.get(artist_name)
     if 'errors' not in artist_request:
         artist_id = artist_request['id']
