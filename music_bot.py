@@ -91,7 +91,7 @@ def options_keyboard(message):
     keyboard.add(*[types.KeyboardButton(name) for name in ['Change city', 'Search Artist', 'Search by genre',
                                                            'Search by similar', 'Preview']])
     #TODO лучше эту штуку сделать колбеком, чтобы не писалось каждый раз это тупое сообщение
-    bot.send_message(message.chat.id, 'Ну хотя бы не крашнулся!', reply_markup=keyboard)
+    bot.send_message(message.chat.id, 'Welcome to the music world!', reply_markup=keyboard)
 
 
 @bot.message_handler(regexp='Change city')
