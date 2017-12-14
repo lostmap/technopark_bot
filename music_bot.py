@@ -88,11 +88,19 @@ def find_city_final(message):
 
 def options_keyboard(message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    keyboard.add(*[types.KeyboardButton(name) for name in ['Change city', 'Search Artist', 'Search by genre',
-                                                           'Search by similar', 'Preview', 'Follow',
-                                                           'Show favorites', 'Delete favorites']])
+    keyboard.add(*[types.KeyboardButton(name) for name in ['Search Artist', 'Search by genre',
+                                                           'Search by similar', 'Preview', 'Bot menu']])
     #TODO лучше эту штуку сделать колбеком, чтобы не писалось каждый раз это тупое сообщение
     bot.send_message(message.chat.id, 'Welcome to the music world!', reply_markup=keyboard)
+
+
+@bot.message_handler(regexp='Bot menu')
+def bot_menu(message):
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    keyboard.add(*[types.KeyboardButton(name) for name in ['Change city', 'Follow',
+                                                           'Show favorites', 'Delete favorites']])
+    #TODO лучше эту штуку сделать колбеком, чтобы не писалось каждый раз это тупое сообщение
+    bot.send_message(message.chat.id, 'Here you can change your data', reply_markup=keyboard)
 
 
 @bot.message_handler(regexp='Change city')
