@@ -18,7 +18,7 @@ import mybandsintown as bit
 # concertMusicBot
 token = '419104336:AAEEFQD2ipnAv9B4ti-UZogq-9wGi9wYpfA'
 
-# Черновичок
+ #Черновичок
 #token = '403882463:AAGFabioSaA1uY5Iku7v-lXVJegeIoP-J3E'
 
 # lostMapMusicBot
@@ -86,6 +86,7 @@ def find_city_final(message):
         bot.register_next_step_handler(msg, find_city)
 
 
+@bot.message_handler(regexp='<<Back')
 def options_keyboard(message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     keyboard.add(*[types.KeyboardButton(name) for name in ['Search Artist', 'Search by genre',
@@ -97,7 +98,7 @@ def options_keyboard(message):
 @bot.message_handler(regexp='Bot menu')
 def bot_menu(message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    keyboard.add(*[types.KeyboardButton(name) for name in ['Change city', 'Follow',
+    keyboard.add(*[types.KeyboardButton(name) for name in ['<<Back', 'Change city', 'Follow',
                                                            'Show favorites', 'Delete favorites']])
     #TODO лучше эту штуку сделать колбеком, чтобы не писалось каждый раз это тупое сообщение
     bot.send_message(message.chat.id, 'Here you can change your data', reply_markup=keyboard)
