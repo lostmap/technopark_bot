@@ -4,6 +4,7 @@ from telebot import types
 from geolocation.main import GoogleMaps
 import requests
 
+import os 
 import logging
 from bandsintown import Client
 from limiter import RateLimiter
@@ -310,11 +311,12 @@ def snippet_search(message):
     if datas:
         for data in datas:
             response = requests.get(data['previewUrl'])
-            with open('out.m4a', 'wb') as f:
-                f.write(response.content)
-            music = open('out.m4a','rb')
-            bot.send_audio(message.chat.id, music, performer=data['artistName'], duration=data["trackTimeMillis"] / 1000,
+            with open('out.m4a', 'a+b') as music:
+                music.write(response.content)
+                music.seek(0)
+                bot.send_audio(message.chat.id, music, performer=data['artistName'], duration=data["trackTimeMillis"] / 1000,
                            title=data['trackName'])
+            os.remove('out.m4a')
     else:
         bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
 
