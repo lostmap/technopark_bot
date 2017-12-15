@@ -16,13 +16,13 @@ import mymusicgraph as mg
 import mybandsintown as bit
 
 # concertMusicBot
-#token = '419104336:AAEEFQD2ipnAv9B4ti-UZogq-9wGi9wYpfA'
+token = '419104336:AAEEFQD2ipnAv9B4ti-UZogq-9wGi9wYpfA'
 
 # Черновичок
 #token = '403882463:AAGFabioSaA1uY5Iku7v-lXVJegeIoP-J3E'
 
 # lostMapMusicBot
-token = '460978562:AAGf9KzIv2RQuBQ-nwDpWnm2D3BYy8IB5rw'
+#token = '460978562:AAGf9KzIv2RQuBQ-nwDpWnm2D3BYy8IB5rw'
 
 bot = telebot.TeleBot(token)
 google_maps = GoogleMaps(api_key='AIzaSyCd9HpQnS40Bl2E1OxQBxJp8vmcP6PXpLo')
