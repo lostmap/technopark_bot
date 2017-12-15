@@ -1,12 +1,37 @@
-import telega
+import music_bot
+import peeweedb as pw
 
 from bandsintown import Client
 # Instantiate client with your app id (this can be anything)
 client = Client('technopark_ruliiiit')
 
-pushpin = u'\U0001F4CC'
 
 
+
+
+
+
+def create_message_new(events):
+    messages = {'photo': '', 'text': []}
+    messages['photo'] += "[" + pushpin + "](" + events[0]['artists'][0]['thumb_url'] + ")"
+
+    message = "Artist: " + events[0]['artists'][0]['name'] + "\n\n"
+    clock = 0
+    for event in events:
+        clock += 1
+        message += "*" + event['title'] + "* \n"
+        message += "Event date: " + event['formatted_datetime'] + "\n"
+             
+        if event['ticket_url']:
+            message += "[By tickets](" + event['ticket_url'] + ")\n\n"
+        else:
+            message += "[By tickets](" + events[0]['facebook_rsvp_url'] + ")\n\n"
+        if clock == 5: #каждые 5 событий = новое сообщение
+            messages['text'].append(message)
+            message = "Artist: " + events[0]['artists'][0]['name'] + "\n\n"
+            clock = 0
+    messages['text'].append(message)
+    return messages
 def create_message(events): 
     messages = list()
     if events:

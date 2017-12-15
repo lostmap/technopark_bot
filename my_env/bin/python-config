@@ -1,4 +1,4 @@
-#!/Users/lostmap/Documents/Programming/Python/technopark_bot/my_env/bin/python
+#!/Users/lostmap/Documents/programming/python/technopark_bot/my_env/bin/python
 
 import sys
 import getopt

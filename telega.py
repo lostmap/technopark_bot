@@ -2,19 +2,21 @@ import telebot
 from telebot import types
 
 
-token = '419104336:AAEEFQD2ipnAv9B4ti-UZogq-9wGi9wYpfA'
+token = '460978562:AAGf9KzIv2RQuBQ-nwDpWnm2D3BYy8IB5rw'
 # token = '403882463:AAGFabioSaA1uY5Iku7v-lXVJegeIoP-J3E'
 # token = '460978562:AAGf9KzIv2RQuBQ-nwDpWnm2D3BYy8IB5rw'
 
 bot = telebot.TeleBot(token)
-
-
+#https://itunes.apple.com/search?term=ARTIST_NAME&entity=music&limit=5
+#music = open('out.m4a','rb')        
+#bot.send_audio(message.chat.id, music, performer='Deuce', title='How I Cum')
 import mymusicgraph as mg
 import mybandsintown as bit
 from bandsintown import Client
 
 client = Client('technopark_ruliiiit')
 
+import requests
 import time
 import logging
 
@@ -141,6 +143,21 @@ def artist_search(message):
     bot.send_message(message.chat.id, artist_message, parse_mode='Markdown')
 
 
+@bot.message_handler(commands=['snip'])
+def snippet_search(message):
+    artist_name = message.text[5:].strip()
+    datas = requests.get("https://itunes.apple.com/search?term="+ artist_name +"&entity=musicTrack&limit=3").json()['results']
+    if datas:
+        for data in datas:
+            response = requests.get(data['previewUrl'])
+            with open('out.m4a', 'wb') as f:
+                f.write(response.content)
+            music = open('out.m4a','rb')    
+            bot.send_audio(message.chat.id, music, performer=data['artistName'], title=data['trackName'])
+    else:
+        bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
+
+        
 @bot.message_handler(commands=['del'])
 def artist_search(message):
     artist_name = message.text[4:].strip()
