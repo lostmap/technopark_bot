@@ -40,6 +40,8 @@ left_arrow = u'\U00002B05'
 # left emoji
 right_arrow = u'\U000027A1'
 
+pw.add_tables()
+
 @bot.message_handler(commands=['start'])
 def starting(message):
     user_id = message.from_user.id
