@@ -4,6 +4,8 @@ import random
 URL = 'http://api.musicgraph.com/api/v2/artist/search?'
 API = 'a8a01a3244f9feb7c4e323b2015d4c5c'
 
+#itunes:
+#"https://itunes.apple.com/search?term=music&genreId"
 
 def get_by_genre(genre):
     default = {

@@ -20,7 +20,6 @@ def get_genre_by_artist_id(genre_id, **kwargs):
         artists.remove(take)
     return art
 
-    
 
 
 

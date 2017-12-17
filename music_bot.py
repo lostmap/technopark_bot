@@ -126,7 +126,7 @@ def search_by_artist(message):
         artist = artist_request['name']
         city = pw.get_city(user_id)
         if pw.is_artist_exist(artist_id): #Идем дальше, если артист есть в базе данных
-            message_to_bandsintown(0, user_id, artist_id, city)
+            message_to_bandsintown(page=0, user_id=user_id, artist_id=artist_id, city=city)
         else:                           #Если нет в базе, то проверяем наличие концертов
             events = client.events(artist)
             if events:                  #Если концерты есть, то добавляем артиста в базу
@@ -140,8 +140,11 @@ def search_by_artist(message):
     options_keyboard(message)
 
 def message_to_bandsintown(page, user_id, artist_id, city, new_event):
+    print(page, user_id, artist_id, city, new_event)
     if not new_event:
         new_event = eval(pw.get_event(artist_id))
+
+
     bot.send_message(user_id, create_message_page(page, new_event, city)['message'],
                      parse_mode='Markdown',
                      disable_web_page_preview=True,
@@ -177,7 +180,7 @@ def create_message_page(page, events_old, city):
         answer['message']   = message
         answer['page_max']  = ceil(total_lines / lines)
     else:
-        message = 'У ' + events_old[0]['artists'][0]['name'] + ' нет ближайших концертов в ' + city
+        message = 'У ' +  ' нет ближайших концертов в '
         answer['message']   = message
         answer['page_max']  = 0
     return answer
@@ -289,12 +292,12 @@ def search_by_genre(message):
                 artist = artist_request['name']
                 city = pw.get_city(user_id)
                 if pw.is_artist_exist(artist_id): #Идем дальше, если артист есть в базе данных
-                    message_to_bandsintown(0, user_id, artist_id, city)
+                    message_to_bandsintown(page=0, user_id=user_id, artist_id=artist_id, city=city)
                 else:                           #Если нет в базе, то проверяем наличие концертов
                     events = client.events(artist)
                     if events:                  #Если концерты есть, то добавляем артиста в базу
                         pw.add_artist(artist_id, artist, events)
-                        message_to_bandsintown(0, user_id, artist_id, city)
+                        message_to_bandsintown(page=0, user_id=user_id, artist_id=artist_id, city=city)
                     else:                       #В противном случае сообщаем об отсутствии ближайших концертов
                         logging.error("Oooops. No " + " concert")
                         bot.send_message(message.chat.id, 'У ' + artist + ' нет ближайших концертов')
