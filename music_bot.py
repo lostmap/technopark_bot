@@ -49,6 +49,16 @@ fire = u'\U0001F525'
 headphone = u'\U0001F3A7'
 party = u'\U0001F389'
 
+town = u'\U0001F307'
+settings = u'\U0001F527'
+cross = u'\U0000274C'
+piano = u'\U0001F3B9'
+heart = u'\U00002764'
+heart_eyes = u'\U0001F60D'
+star = u'\U00002B50'
+shadow =  u'\U0001F465'
+
+
 pw.add_tables()
 
 genres = {  # Blues/Jazz
@@ -138,29 +148,30 @@ def find_city_final(message):
         bot.register_next_step_handler(msg, find_city)
 
 
-@bot.message_handler(regexp='<<Back')
+@bot.message_handler(regexp=left_arrow + 'Back')
 def options_keyboard(message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    keyboard.add(*[types.KeyboardButton(name) for name in ['Search Artist', 'Search by genre',
-                                                           'Search by similar', 'Preview', 'Settings']])
-    bot.send_message(message.chat.id, sax + party, reply_markup=keyboard)
+    keyboard.add(*[types.KeyboardButton(name) for name in ['Search Artist' + star, 'Search by genre' + sax,
+                                                           'Search by similar' + shadow, 'Preview' + notes,
+                                                           'Settings' + settings]])
+    bot.send_message(message.chat.id, party, reply_markup=keyboard)
 
 
-@bot.message_handler(regexp='Bot menu')
+@bot.message_handler(regexp='Settings' + settings)
 def bot_menu(message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    keyboard.add(*[types.KeyboardButton(name) for name in ['<<Back', 'Change city', 'Follow',
-                                                           'Show favorites', 'Delete favorites']])
+    keyboard.add(*[types.KeyboardButton(name) for name in [left_arrow + 'Back', 'Change city' + town, 'Follow' + heart_eyes,
+                                                           'Show favorites' + heart, 'Delete favorites' + cross]])
     bot.send_message(message.chat.id, 'Here you can change your data', reply_markup=keyboard)
 
 
-@bot.message_handler(regexp='Change city')
+@bot.message_handler(regexp='Change city' + town)
 def change_city(message):
     msg = bot.send_message(message.chat.id, 'Write city, please!')
     bot.register_next_step_handler(msg, find_city)
 
 
-@bot.message_handler(regexp='Search Artist')
+@bot.message_handler(regexp='Search Artist' + star)
 def artist(message):
     msg = bot.send_message(message.chat.id, 'Write artist please')
     bot.register_next_step_handler(msg, search_by_artist)
@@ -289,7 +300,7 @@ def pages(call):
             disable_web_page_preview=True)
 
 
-@bot.message_handler(regexp='Search by genre')
+@bot.message_handler(regexp='Search by genre' + piano)
 def genre(message):
     keyboard = types.ReplyKeyboardMarkup()
     keyboard.add(*[types.KeyboardButton(genre) for genre in ['Rock', 'Electronic', 'Pop', 'Blues/Jazz',
@@ -375,7 +386,7 @@ def search_by_genre(message):
     options_keyboard(message)
 
 
-@bot.message_handler(regexp='Search by similar')
+@bot.message_handler(regexp='Search by similar' + shadow)
 def similar(message):
     msg = bot.send_message(message.chat.id, 'Write artist, please')
     bot.register_next_step_handler(msg, search_by_similar)
@@ -411,7 +422,7 @@ def search_by_similar(message):
     options_keyboard(message)
 
 
-@bot.message_handler(regexp='Follow')
+@bot.message_handler(regexp='Follow' + heart_eyes)
 def fan_of_handler(message):
     msg = bot.send_message(message.chat.id, 'Write artist, please')
     bot.register_next_step_handler(msg, fan_of)
@@ -431,7 +442,7 @@ def fan_of(message):
         bot.send_message(message.chat.id, 'Wrong artist name')
 
 
-@bot.message_handler(regexp='Show favorites')
+@bot.message_handler(regexp='Show favorites' + heart)
 def favorites(message):
     artists = pw.get_relations(message.chat.id)
     artist_message = ""
@@ -447,7 +458,7 @@ def favorites(message):
     bot.send_message(message.chat.id, artist_message, parse_mode='Markdown')
 
 
-@bot.message_handler(regexp='Delete favorites')
+@bot.message_handler(regexp='Delete favorites' + cross)
 def delete_handler(message):
     msg = bot.send_message(message.chat.id, 'Write artist, please')
     bot.register_next_step_handler(msg, delete)
@@ -469,7 +480,7 @@ def delete(message):
         bot.send_message(message.chat.id, 'Wrong artist name')
 
 
-@bot.message_handler(regexp='Preview')
+@bot.message_handler(regexp='Preview' + notes)
 def preview(message):
     msg = bot.send_message(message.chat.id, 'Write artist, please')
     bot.register_next_step_handler(msg, snippet_search)
