@@ -32,8 +32,7 @@ def add_days(days):
             for event in update_events:
                 if event not in old_events:
                     new_events.append(event)
-            send_update_message.delay(artist_id, new_events)
-
+            send_update_message(artist_id, new_events)
 
 
 app.conf.update(
@@ -45,5 +44,3 @@ app.conf.update(
         },
     },
 )
-
-add_days(0)

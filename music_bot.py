@@ -140,11 +140,9 @@ def search_by_artist(message):
     options_keyboard(message)
 
 def message_to_bandsintown(page, user_id, artist_id, city, new_event=0):
-    print(page, user_id, artist_id, city, new_event)
     if not new_event:
         new_event = eval(pw.get_event(artist_id))
-
-
+        
     bot.send_message(user_id, create_message_page(page, new_event, city)['message'],
                      parse_mode='Markdown',
                      disable_web_page_preview=True,
@@ -164,7 +162,7 @@ def create_message_page(page, events_old, city):
                 events.append(event_old)
     else:
         events = events_old
-
+    
     if events:
         total_lines = len(events)
         message = "Artist: " + events[0]['artists'][0]['name'] + "\n\n"
@@ -180,7 +178,7 @@ def create_message_page(page, events_old, city):
         answer['message']   = message
         answer['page_max']  = ceil(total_lines / lines)
     else:
-        message = 'У ' +  ' нет ближайших концертов в '
+        message = 'У ' + events_old[0]['artists'][0]['name'] + ' нет ближайших концертов в ' + city
         answer['message']   = message
         answer['page_max']  = 0
     return answer
