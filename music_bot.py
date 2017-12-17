@@ -293,7 +293,7 @@ def pages(call):
 def genre(message):
     keyboard = types.ReplyKeyboardMarkup()
     keyboard.add(*[types.KeyboardButton(genre) for genre in ['Rock', 'Electronic', 'Pop', 'Blues/Jazz',
-                                                             'Rap/Hip Hop', 'Others']])
+                                                             'Hip-Hop/Rap', 'Others']])
     bot.send_message(message.chat.id, "Chose style", reply_markup=keyboard)
 
 
@@ -317,7 +317,7 @@ def electronic(message):
 
 @bot.message_handler(regexp='Pop')
 def style(message):
-    bot.register_next_step_handler(message, search_by_genre)
+    search_by_genre(message)
 
 
 @bot.message_handler(regexp='Blues/Jazz')
@@ -329,9 +329,9 @@ def blues(message):
     bot.register_next_step_handler(msg, search_by_genre)
 
 
-@bot.message_handler(regexp='Rap/Hip Hop')
+@bot.message_handler(regexp='Hip-Hop/Rap')
 def style(message):
-    bot.register_next_step_handler(message, search_by_genre)
+    search_by_genre(message)
 
 
 @bot.message_handler(regexp='Others')
