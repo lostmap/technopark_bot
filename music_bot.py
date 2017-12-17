@@ -139,8 +139,10 @@ def search_by_artist(message):
         bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
     options_keyboard(message)
 
-def message_to_bandsintown(page, user_id, artist_id, city):
-    bot.send_message(user_id, create_message_page(page, eval(pw.get_event(artist_id)), city)['message'],
+def message_to_bandsintown(page, user_id, artist_id, city, new_event):
+    if not new_event:
+        new_event = eval(pw.get_event(artist_id))
+    bot.send_message(user_id, create_message_page(page, new_event, city)['message'],
                      parse_mode='Markdown',
                      disable_web_page_preview=True,
                      reply_markup=pages_keyboard(0, artist_id, city))  # нулевая страница
