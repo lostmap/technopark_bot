@@ -12,6 +12,7 @@ from math import ceil
 # импорт peewee для бд
 import peeweedb as pw
 
+#import itunes_api as it
 import mymusicgraph as mg
 import mybandsintown as bit
 
@@ -139,7 +140,7 @@ def search_by_artist(message):
     options_keyboard(message)
 
 def message_to_bandsintown(page, user_id, artist_id, city):
-    bot.send_message(user_id, create_message_page(page, artist_id, city)['message'],
+    bot.send_message(user_id, create_message_page(page, eval(pw.get_event(artist_id)), city)['message'],
                      parse_mode='Markdown',
                      disable_web_page_preview=True,
                      reply_markup=pages_keyboard(0, artist_id, city))  # нулевая страница
@@ -147,8 +148,7 @@ def message_to_bandsintown(page, user_id, artist_id, city):
                      parse_mode='Markdown',
                      disable_notification=True)
 
-def create_message_page(page, artist_id, city):
-    events_old = eval(pw.get_event(artist_id))
+def create_message_page(page, events_old, city):
     lines = 5
     answer = {}
     events = []
@@ -187,7 +187,7 @@ def create_photo(artist_id):
 def pages_keyboard(page, artist_id, city): # создаем кнопки для листания блоков информации
     keyboard = types.InlineKeyboardMarkup()
     btns = []
-    page_max = create_message_page(page, artist_id, city)['page_max']
+    page_max = create_message_page(page, eval(pw.get_event(artist_id)), city)['page_max']
     if page > 0: 
         btns.append(types.InlineKeyboardButton(text=left_arrow,
         callback_data='{arrow}_{page}_{artist}_{city}'.format(arrow=left_arrow,
@@ -224,7 +224,7 @@ def pages(call):
         bot.edit_message_text(
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
-            text=create_message_page(int(page), int(artist), city)['message'],
+            text=create_message_page(int(page), eval(pw.get_event(int(artist))), city)['message'],
             parse_mode='Markdown',
             reply_markup=pages_keyboard(int(page), int(artist), city),
             disable_web_page_preview=True)
@@ -273,6 +273,7 @@ def search_by_genre(message):
     genre = message.text
     try:
         my_artists = mg.get_by_genre(genre)
+        print(my_artists)
     except:
         logging.error("Oooops. " + genre + " is invalid genre")
         bot.send_message(message.chat.id, 'Такого жанра нет')
