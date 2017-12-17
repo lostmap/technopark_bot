@@ -16,13 +16,13 @@ import mymusicgraph as mg
 import mybandsintown as bit
 
 # concertMusicBot
-token = '419104336:AAEEFQD2ipnAv9B4ti-UZogq-9wGi9wYpfA'
+#token = '419104336:AAEEFQD2ipnAv9B4ti-UZogq-9wGi9wYpfA'
 
 # Черновичок
 #token = '403882463:AAGFabioSaA1uY5Iku7v-lXVJegeIoP-J3E'
 
 # lostMapMusicBot
-#token = '460978562:AAGf9KzIv2RQuBQ-nwDpWnm2D3BYy8IB5rw'
+token = '460978562:AAGf9KzIv2RQuBQ-nwDpWnm2D3BYy8IB5rw'
 
 bot = telebot.TeleBot(token)
 google_maps = GoogleMaps(api_key='AIzaSyCd9HpQnS40Bl2E1OxQBxJp8vmcP6PXpLo')
@@ -153,9 +153,12 @@ def create_message_page(page, artist_id, city):
     answer = {}
     events = []
 
-    for event_old in events_old:
-        if event_old['venue']['city'] == city:
-            events.append(event_old)
+    if city != 'None':
+        for event_old in events_old:
+            if event_old['venue']['city'] == city:
+                events.append(event_old)
+    else:
+        events = events_old
 
     if events:
         total_lines = len(events)
@@ -168,13 +171,13 @@ def create_message_page(page, artist_id, city):
                 if events[event]['ticket_url']:
                     message += "[Buy tickets](" + events[event]['ticket_url'] + ")\n\n"
                 else:
-                    message += "[Buy tickets](" + events[event][0]['facebook_rsvp_url'] + ")\n\n"
+                    message += "[Buy tickets](" + events[event]['facebook_rsvp_url'] + ")\n\n"
         answer['message']   = message
         answer['page_max']  = ceil(total_lines / lines)
     else:
         message = 'У ' + events_old[0]['artists'][0]['name'] + ' нет ближайших концертов в ' + city
         answer['message']   = message
-        answer['page_max']  = 1
+        answer['page_max']  = 0
     return answer
 
 def create_photo(artist_id):
@@ -184,28 +187,35 @@ def create_photo(artist_id):
 def pages_keyboard(page, artist_id, city): # создаем кнопки для листания блоков информации
     keyboard = types.InlineKeyboardMarkup()
     btns = []
-    if page > 0: btns.append(types.InlineKeyboardButton(
-        text=left_arrow,
+    page_max = create_message_page(page, artist_id, city)['page_max']
+    if page > 0: 
+        btns.append(types.InlineKeyboardButton(text=left_arrow,
         callback_data='{arrow}_{page}_{artist}_{city}'.format(arrow=left_arrow,
                                                        page=page - 1,
                                                        artist=artist_id,
                                                        city= city)))
 
-    if page <  create_message_page(page, artist_id, city)['page_max'] - 1: btns.append(types.InlineKeyboardButton(
-        text = right_arrow,
+    if page < page_max - 1: 
+        btns.append(types.InlineKeyboardButton(text = right_arrow,
         callback_data = '{arrow}_{page}_{artist}_{city}'.format(arrow = right_arrow,
                                                          page = page + 1,
                                                          artist = artist_id,
                                                          city= city)))
+    if page_max == 0: btns.append(types.InlineKeyboardButton(text = 'Show All Concerts',
+        callback_data = '{show}_{page}_{artist}_{city}'.format(show = 'More',
+                                                         page = 0,
+                                                         artist = artist_id,
+                                                         city= None)))
     keyboard.add(*btns)
     return keyboard
 
 @bot.callback_query_handler(func=lambda call: call.data)
 def pages(call):
     # Обрабатываем нажатия кнопок
-    arrow = call.data.split('_')[0]
+    called = call.data.split('_')[0]
     # Обработка стрелок
-    if (arrow == left_arrow) or (arrow == right_arrow):
+
+    if (called == left_arrow) or (called == right_arrow) or (called == 'More'):
         page = call.data.split('_')[1]
         artist = call.data.split('_')[2]
         city = call.data.split('_')[3]
