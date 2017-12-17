@@ -139,7 +139,7 @@ def search_by_artist(message):
         bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
     options_keyboard(message)
 
-def message_to_bandsintown(page, user_id, artist_id, city, new_event):
+def message_to_bandsintown(page, user_id, artist_id, city, new_event=0):
     print(page, user_id, artist_id, city, new_event)
     if not new_event:
         new_event = eval(pw.get_event(artist_id))
