@@ -30,9 +30,22 @@ class Relation(Model):
         database = db
 
 
-def add_user(chat_id):
+def add_user(chat_id, city):
 
-    User.get_or_create(chat_id=chat_id, city="moscow")
+    user = User.select().where(User.chat_id == chat_id)
+    if user:
+        user = User.get(User.chat_id == chat_id)
+        user.city = city
+        user.save()
+    else:
+        User.get_or_create(chat_id=chat_id, city=city)
+
+
+def add_artist(b_in_t_id, name, information):
+
+    artist = Artist.select().where(Artist.b_in_t_id == b_in_t_id)
+    if not artist:
+        Artist.create(b_in_t_id=b_in_t_id, name=name, information=information)
 
 
 def add_relation(chat_id, artist_b_in_t_id, artist_name, events):
@@ -70,6 +83,46 @@ def get_relations(chat_id):
     return artists_name
 
 
+def is_exist(chat_id):
+    user = User.select().where(User.chat_id == chat_id)
+    return user
+
+
+def is_artist_exist(b_i_t_id):
+    artist = Artist.select().where(Artist.b_in_t_id == b_i_t_id)
+    if artist:
+        return artist.dicts().get()['information']
+
+
+def set_new_information(artist_id, new_events):
+    for artist in Artist.select().where(Artist.id == artist_id):
+        artist.information = new_events
+        artist.save()
+
+
+def get_city(chat_id):
+    user = User.select().where(User.chat_id == chat_id)
+    return user.dicts().get()['city']
+
+
+def get_event(b_i_t_id):
+    artist = Artist.select().where(Artist.b_in_t_id == b_i_t_id)
+    return artist.dicts().get()['information']
+
+
+def get_artist_generator():
+    for artist in Artist.select():
+        yield artist.id, artist.name, artist.information
+
+
+def get_users_dict(artist_id):
+    users_dict = {}
+    for relation in Relation.select().where(Relation.artist_id == artist_id):
+        user = User.select().where(User.id == relation.user_id)
+        users_dict[user.dicts().get()['chat_id']] = user.dicts().get()['city']
+    return users_dict
+
+
 def add_tables():
 
     try:
@@ -91,13 +144,25 @@ def add_tables():
 if __name__ == "__main__":
 
     add_tables()
-    # user = User.create(chat_id=126789, city="Moscow")
-
+    # user = User.create(chat_id=124896, city='')
+    #
     # for user in User.select():
-    #     print(user.id, " ", user.chat_id)
+    #     print(user.id, " ", user.chat_id, " ", user.city)
+    #
+    #
+    # add_user(179371682, "Riga")
+    #
+    #
+    #
+    # for user in User.select():
+    #     print(user.id, " ", user.chat_id, " ", user.city)
+    #
+    for artist in Artist.select():
+        print(artist.id, " ", artist.b_in_t_id," ", artist.name, " ", artist.information)
+        artist.information = "[{1:2},{3:4}]"
+        artist.save()
+    print("\n\n\n")
 
-    # for artist in Artist.select():
-    #     print(artist.id, " ", artist.b_in_t_id," ", artist.information)
 
     # # show relations
     # for relation in Relation.select():
@@ -106,7 +171,8 @@ if __name__ == "__main__":
     # user = User.select().where(User.id == 1)
     # print(user.dicts().get()['id'])
 
-    # show users
-    # for artist in User.select().where(User.id == 1):
-    #     print(artist.chat_id)
+    # # show users
+    # for user in User.select().where(User.id == 124689):
+    #     print(user.chat_id)
+    #     print(user.city)
 
