@@ -3,6 +3,7 @@ from telebot import types
 
 from geolocation.main import GoogleMaps
 import requests
+
 import os
 import logging
 from bandsintown import Client
@@ -10,6 +11,7 @@ from limiter import RateLimiter
 from math import ceil
 # импорт peewee для бд
 import peeweedb as pw
+
 import itunes_api as it
 import mymusicgraph as mg
 import mybandsintown as bit
@@ -21,7 +23,7 @@ import mybandsintown as bit
 token = '403882463:AAGFabioSaA1uY5Iku7v-lXVJegeIoP-J3E'
 
 # lostMapMusicBot
-#token = '460978562:AAGf9KzIv2RQuBQ-nwDpWnm2D3BYy8IB5rw'
+# token = '460978562:AAGf9KzIv2RQuBQ-nwDpWnm2D3BYy8IB5rw'
 
 bot = telebot.TeleBot(token)
 google_maps = GoogleMaps(api_key='AIzaSyCd9HpQnS40Bl2E1OxQBxJp8vmcP6PXpLo')
@@ -39,6 +41,13 @@ left_arrow = u'\U00002B05'
 # left emoji
 right_arrow = u'\U000027A1'
 
+guitar = u'\U0001F3B8'
+notes = u'\U0001F3B6'
+sax = u'\U0001F3B7'
+microphone = u'\U0001F3A4'
+fire = u'\U0001F525'
+headphone = u'\U0001F3A7'
+party = u'\U0001F389'
 
 pw.add_tables()
 
@@ -137,7 +146,7 @@ def options_keyboard(message):
     bot.send_message(message.chat.id, sax + party, reply_markup=keyboard)
 
 
-@bot.message_handler(regexp='Settings')
+@bot.message_handler(regexp='Bot menu')
 def bot_menu(message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     keyboard.add(*[types.KeyboardButton(name) for name in ['<<Back', 'Change city', 'Follow',
@@ -147,13 +156,13 @@ def bot_menu(message):
 
 @bot.message_handler(regexp='Change city')
 def change_city(message):
-    msg = bot.send_message(message.chat.id, 'Write city, please')
+    msg = bot.send_message(message.chat.id, 'Write city, please!')
     bot.register_next_step_handler(msg, find_city)
 
 
 @bot.message_handler(regexp='Search Artist')
 def artist(message):
-    msg = bot.send_message(message.chat.id, 'Write artist, please')
+    msg = bot.send_message(message.chat.id, 'Write artist please')
     bot.register_next_step_handler(msg, search_by_artist)
 
 
@@ -166,7 +175,7 @@ def search_by_artist(message):
         artist = artist_request['name']
         city = pw.get_city(user_id)
         if pw.is_artist_exist(artist_id): #Идем дальше, если артист есть в базе данных
-            message_to_bandsintown(0, user_id, artist_id, city)
+            message_to_bandsintown(page=0, user_id=user_id, artist_id=artist_id, city=city)
         else:                           #Если нет в базе, то проверяем наличие концертов
             events = client.events(artist)
             if events:                  #Если концерты есть, то добавляем артиста в базу
@@ -174,14 +183,18 @@ def search_by_artist(message):
                 message_to_bandsintown(0, user_id, artist_id, city)
             else:                       #В противном случае сообщаем об отсутствии ближайших концертов
                 logging.error("Oooops. No " + " concert")
-                bot.send_message(message.chat.id, artist + ' has no concerts in ' + city)
+                bot.send_message(message.chat.id, 'У ' + artist + ' нет ближайших концертов')
     else:
-        bot.send_message(message.chat.id, 'Wrong artist name')
+        bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
     options_keyboard(message)
 
 
-def message_to_bandsintown(page, user_id, artist_id, city):
-    bot.send_message(user_id, create_message_page(page, artist_id, city)['message'],
+def message_to_bandsintown(page, user_id, artist_id, city, new_event=0):
+    print(page, user_id, artist_id, city, new_event)
+    if not new_event:
+        new_event = eval(pw.get_event(artist_id))
+
+    bot.send_message(user_id, create_message_page(page, new_event, city)['message'],
                      parse_mode='Markdown',
                      disable_web_page_preview=True,
                      reply_markup=pages_keyboard(0, artist_id, city))  # нулевая страница
@@ -190,8 +203,7 @@ def message_to_bandsintown(page, user_id, artist_id, city):
                      disable_notification=True)
 
 
-def create_message_page(page, artist_id, city):
-    events_old = eval(pw.get_event(artist_id))
+def create_message_page(page, events_old, city):
     lines = 5
     answer = {}
     events = []
@@ -232,26 +244,26 @@ def create_photo(artist_id):
 def pages_keyboard(page, artist_id, city): # создаем кнопки для листания блоков информации
     keyboard = types.InlineKeyboardMarkup()
     btns = []
-    page_max = create_message_page(page, artist_id, city)['page_max']
+    page_max = create_message_page(page, eval(pw.get_event(artist_id)), city)['page_max']
     if page > 0: 
         btns.append(types.InlineKeyboardButton(text=left_arrow,
-        callback_data='{arrow}_{page}_{artist}_{city}'.format(arrow=left_arrow,
-                                                              page=page - 1,
-                                                              artist=artist_id,
-                                                              city=city)))
-
-    if page < page_max - 1: 
-        btns.append(types.InlineKeyboardButton(text=right_arrow,
-                                               callback_data='{arrow}_{page}_{artist}_{city}'.format(arrow=right_arrow,
-                                                                                                     page=page + 1,
+                                               callback_data='{arrow}_{page}_{artist}_{city}'.format(arrow=left_arrow,
+                                                                                                     page=page - 1,
                                                                                                      artist=artist_id,
                                                                                                      city=city)))
 
-    if page_max == 0: btns.append(types.InlineKeyboardButton(text='Show All Concerts',
-                                                             callback_data='{show}_{page}_{artist}_{city}'.format(show='More',
-                                                                                                                  page=0,
-                                                                                                                  artist=artist_id,
-                                                                                                                  city=None)))
+    if page < page_max - 1: 
+        btns.append(types.InlineKeyboardButton(text = right_arrow,
+                                               callback_data = '{arrow}_{page}_{artist}_{city}'.format(arrow=right_arrow,
+                                                                                                       page=page + 1,
+                                                                                                       artist=artist_id,
+                                                                                                       city=city)))
+
+        if page_max == 0: btns.append(types.InlineKeyboardButton(text = 'Show All Concerts',
+                                                                 callback_data = '{show}_{page}_{artist}_{city}'.format(show='More',
+                                                                                                                        page=0,
+                                                                                                                        artist=artist_id,
+                                                                                                                        city=None)))
     keyboard.add(*btns)
     return keyboard
 
@@ -271,7 +283,7 @@ def pages(call):
         bot.edit_message_text(
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
-            text=create_message_page(int(page), int(artist), city)['message'],
+            text=create_message_page(int(page), eval(pw.get_event(int(artist))), city)['message'],
             parse_mode='Markdown',
             reply_markup=pages_keyboard(int(page), int(artist), city),
             disable_web_page_preview=True)
@@ -283,15 +295,6 @@ def genre(message):
     keyboard.add(*[types.KeyboardButton(genre) for genre in ['Rock', 'Electronic', 'Pop', 'Blues/Jazz',
                                                              'Rap/Hip Hop', 'Others']])
     bot.send_message(message.chat.id, "Chose style", reply_markup=keyboard)
-
-
-guitar = u'\U0001F3B8'
-notes = u'\U0001F3B6'
-sax = u'\U0001F3B7'
-microphone = u'\U0001F3A4'
-fire = u'\U0001F525'
-headphone = u'\U0001F3A7'
-party = u'\U0001F389'
 
 
 @bot.message_handler(regexp='Rock')
@@ -358,17 +361,17 @@ def search_by_genre(message):
                 artist = artist_request['name']
                 city = pw.get_city(user_id)
                 if pw.is_artist_exist(artist_id): #Идем дальше, если артист есть в базе данных
-                    message_to_bandsintown(0, user_id, artist_id, city)
+                    message_to_bandsintown(page=0, user_id=user_id, artist_id=artist_id, city=city)
                 else:                           #Если нет в базе, то проверяем наличие концертов
                     events = client.events(artist)
                     if events:                  #Если концерты есть, то добавляем артиста в базу
                         pw.add_artist(artist_id, artist, events)
-                        message_to_bandsintown(0, user_id, artist_id, city)
+                        message_to_bandsintown(page=0, user_id=user_id, artist_id=artist_id, city=city)
                     else:                       #В противном случае сообщаем об отсутствии ближайших концертов
                         logging.error("Oooops. No " + " concert")
                         bot.send_message(message.chat.id, artist + " hasn't concerts")
             else:
-                bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
+                bot.send_message(message.chat.id, 'Wrong artist name')
     options_keyboard(message)
 
 
@@ -382,7 +385,7 @@ def search_by_similar(message):
     try:
         my_artists = mg.get_similar_artists(message.text)
     except:
-        # logging.error("Oooops. " + genre + " is invalid genre")
+        logging.error("Oooops. " + my_artists + " is invalid artist")
         bot.send_message(message.chat.id, "I don't know this artist")
     else:
         bot.send_message(message.chat.id, "\n".join(my_artists))
@@ -394,17 +397,17 @@ def search_by_similar(message):
                 artist = artist_request['name']
                 city = pw.get_city(user_id)
                 if pw.is_artist_exist(artist_id): #Идем дальше, если артист есть в базе данных
-                    message_to_bandsintown(0, user_id, artist_id, city)
+                    message_to_bandsintown(page=0, user_id=user_id, artist_id=artist_id, city=city)
                 else:                           #Если нет в базе, то проверяем наличие концертов
                     events = client.events(artist)
                     if events:                  #Если концерты есть, то добавляем артиста в базу
                         pw.add_artist(artist_id, artist, events)
-                        message_to_bandsintown(0, user_id, artist_id, city)
+                        message_to_bandsintown(page=0, user_id=user_id, artist_id=artist_id, city=city)
                     else:                       #В противном случае сообщаем об отсутствии ближайших концертов
                         logging.error("Oooops. No " + " concert")
                         bot.send_message(message.chat.id, artist + " hasn't concerts")
             else:
-                bot.send_message(message.chat.id, 'Имя исполнителя введено не верно')
+                bot.send_message(message.chat.id, 'Wrong artist name')
     options_keyboard(message)
 
 
@@ -474,7 +477,7 @@ def preview(message):
 
 def snippet_search(message):
     artist_name = message.text
-    datas = requests.get("https://itunes.apple.com/search?term=" + artist_name + "&entity=musicTrack&limit=3").json()['results']
+    datas = requests.get("https://itunes.apple.com/search?term="+ artist_name + "&entity=musicTrack&limit=3").json()['results']
     if datas:
         for data in datas:
             response = requests.get(data['previewUrl'])
@@ -482,7 +485,7 @@ def snippet_search(message):
                 music.write(response.content)
                 music.seek(0)
                 bot.send_audio(message.chat.id, music, performer=data['artistName'],
-                               duration=data["trackTimeMillis"] / 1000, title=data['trackName'])
+                               duration=data["trackTimeMillis"] / 1000, title = data['trackName'])
             os.remove('out.m4a')
     else:
         bot.send_message(message.chat.id, 'Wrong artist name')
