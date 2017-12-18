@@ -103,28 +103,56 @@ def starting(message):
         bot.register_next_step_handler(msg, find_city)
 
 def find_city(message):
-    address = message.text
     try:
-        location = google_maps.search(location=address)
+        if message.content_type == 'location':
+            coord = message.location
+            lat = coord.latitude
+            lng = coord.longitude
+            location = google_maps.search(lat=lat, lng=lng).first()
+            city = location.city
+            city = city.decode('utf-8')
+            address = city
+        else:
+            address = message.text
+            location = google_maps.search(location=address)
+            if location.all():
+                my_location = location.first()
+                city = my_location.city
+                city = city.decode('utf-8')
+            else:
+                msg = bot.send_message(message.chat.id, 'Write city again, please!')
+                bot.register_next_step_handler(msg, find_city)
+
     except:
-        logging.error('City ', address, 'not found')
+        logging.error('City not found')
         msg = bot.send_message(message.chat.id, 'Try again')
         bot.register_next_step_handler(msg, find_city)
-    else:
-        if location.all():
-            my_location = location.first()
-            city = my_location.city
-            city = city.decode('utf-8')
 
-            if address != city:
-                yes_or_no(message, city)
-            else:
-                user_id = message.from_user.id
-                pw.add_user(user_id, city)
-                options_keyboard(message)
+    else:
+        if address != city:
+            yes_or_no(message, city)
         else:
-            msg = bot.send_message(message.chat.id, 'Write city again, please!')
-            bot.register_next_step_handler(msg, find_city)
+            user_id = message.from_user.id
+            pw.add_user(user_id, city)
+            if message.content_type == 'location':
+                bot.send_message(message.chat.id, "What's up in " + city + '?')
+            options_keyboard(message)
+
+def yes_or_no(message, city):
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    keyboard.add(*[types.KeyboardButton(name) for name in ['Yes', 'No']])
+    msg = bot.send_message(message.chat.id, 'Did you mean ' + str(city) + '?', reply_markup=keyboard)
+    user_id = message.from_user.id
+    pw.add_user(user_id, city)
+    bot.register_next_step_handler(msg, find_city_final)
+
+def find_city_final(message):
+    if message.text == 'Yes':
+        options_keyboard(message)
+    else:
+        msg = bot.send_message(message.from_user.id, 'Write city again, please!')
+        bot.register_next_step_handler(msg, find_city)
+
 
 def yes_or_no(message, city):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -159,7 +187,7 @@ def bot_menu(message):
 
 @bot.message_handler(regexp='Change city' + town)
 def change_city(message):
-    msg = bot.send_message(message.chat.id, 'Write city, please!')
+    msg = bot.send_message(message.chat.id, 'Write city or send your location, please!')
     bot.register_next_step_handler(msg, find_city)
 
 @bot.message_handler(regexp='Search Artist' + star)
@@ -196,16 +224,22 @@ def search_by_artist(message):
 
 def message_to_bandsintown(page, user_id, artist_id, city, new_event=0):
     if not new_event:
-        new_event = eval(pw.get_event(artist_id))
-
-    bot.send_message(user_id, create_message_page(page, new_event, city)['message'],
-                     parse_mode='Markdown',
-                     disable_web_page_preview=True,
-                     reply_markup=pages_keyboard(0, artist_id, city))  # нулевая страница
+        new = pw.get_event(artist_id)
+        if new:
+            new_event = eval(new)
+        else:
+            new_event = []
     if new_event:
+        bot.send_message(user_id, create_message_page(page, new_event, city)['message'],
+                        parse_mode='Markdown',
+                        disable_web_page_preview=True,
+                        reply_markup=pages_keyboard(0, artist_id, city))  # нулевая страница
+    
         bot.send_message(user_id, create_photo(artist_id),
                         parse_mode='Markdown',
                         disable_notification=True)
+    else:
+        bot.send_message(user_id, 'This artist is not currently on tour')
 
 def create_message_page(page, events_old, city):
     lines = 5
@@ -234,13 +268,7 @@ def create_message_page(page, events_old, city):
         answer['message']   = message
         answer['page_max']  = ceil(total_lines / lines)
     else:
-        if events_old:
-            message = events_old[0]['artists'][0]['name'] + ' has no concerts in ' + city
-        else:
-            message = 'This artist is not currently on tour'
-            answer['message']   = message
-            answer['page_max']  = -1
-            return answer
+        message = events_old[0]['artists'][0]['name'] + ' has no concerts in ' + city
         answer['message']   = message
         answer['page_max']  = 0
     return answer
@@ -383,9 +411,8 @@ def similar(message):
     bot.register_next_step_handler(msg, search_by_similar)
 
 def search_by_similar(message):
-    try:
-        my_artists = mg.get_similar_artists(message.text)
-    except:
+    my_artists = mg.get_similar_artists(message.text)
+    if my_artists == 'errors':
         logging.error("Oooops. " + my_artists + " is invalid artist")
         bot.send_message(message.chat.id, "I don't know this artist")
     else:

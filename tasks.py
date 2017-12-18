@@ -14,9 +14,8 @@ def send_update_message(artist_id, new_events):
     users_dict = pw.get_users_dict(artist_id)
     to_bnt = pw.get_b_t_n(artist_id)
     for user_chat_id in users_dict.keys():
-        message_to_bandsintown(0, user_chat_id, to_bnt, users_dict[user_chat_id], new_events)
-        #print(0, user_chat_id, to_bnt, users_dict[user_chat_id])
-        #print("\n\n\n\n")
+        if new_events:
+            message_to_bandsintown(0, user_chat_id, to_bnt, users_dict[user_chat_id], new_events)
         return user_chat_id, users_dict[user_chat_id]
 
 
@@ -25,7 +24,10 @@ def add_days(days):
 
     for artist_id, artist_name, artist_information in pw.get_artist_generator():
         update_events = client.events(artist_name)
-        old_events = eval(artist_information)
+        if artist_information:
+            old_events = eval(artist_information)
+        else:
+            old_events = []
         new_events = []
         if update_events != old_events:
             pw.set_new_information(artist_id, update_events)
@@ -39,7 +41,7 @@ app.conf.update(
     CELERYBEAT_SCHEDULE={
         'multiply-each-10-seconds': {
             'task': 'tasks.add_days',
-            'schedule': datetime.timedelta(minutes=3),
+            'schedule': datetime.timedelta(day=1),
             'args': (2, )
         },
     },
