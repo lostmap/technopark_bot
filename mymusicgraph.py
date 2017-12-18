@@ -22,18 +22,18 @@ def get_by_genre(genre):
     return artists_name
 
 
-def get_similar_artists(artist):    
+def get_similar_artists(artist):
     default = {
         'api_key': API,
         'similar_to': artist,
-        'limit' : 5
+        'limit': 25
      }
 
     data = requests.get(URL, params=default).json()
     artists = data['data']
     artists_name = []
-    for artist in artists:
-        artists_name.append(artist['name'])
+    for i in range(5):
+        artists_name.append(random.choice(artists)['name'])
     return artists_name
 
 
