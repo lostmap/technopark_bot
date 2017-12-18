@@ -1,6 +1,8 @@
 import requests
 import random
 from bandsintown import Client
+import logging
+
 client = Client('technopark_ruliiiit')
 
 URL = 'https://itunes.apple.com/search?'
@@ -18,12 +20,14 @@ def get_genre_by_artist_id(genre_id, **kwargs):
     valid_artists = []
     while len(valid_artists) < 5:
         get_random_artist = random.sample(unique_artists,1)[0]
-        artist_request = client.get(get_random_artist)
-        if 'errors' not in artist_request:
-            valid_artists.append(get_random_artist)
-        unique_artists.remove(get_random_artist)
+        try:
+            artist_request = client.get(get_random_artist)
+        except:
+            unique_artists.remove(get_random_artist)
+        else:
+            if 'errors' not in artist_request:
+                valid_artists.append(get_random_artist)
+            unique_artists.remove(get_random_artist)
     return valid_artists
-
-
 
 

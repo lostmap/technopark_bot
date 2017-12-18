@@ -22,10 +22,11 @@ def get_by_genre(genre):
     return artists_name
 
 
-def get_similar_artists(artist):
+def get_similar_artists(artist):    
     default = {
         'api_key': API,
         'similar_to': artist,
+        'limit' : 5
      }
 
     data = requests.get(URL, params=default).json()

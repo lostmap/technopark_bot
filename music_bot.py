@@ -64,7 +64,7 @@ genres = {  # Blues/Jazz
           'Jazz': 11,
           'R&B/Soul': 15,
           'Swing': 1055,
-          'Blues-Rock': 1147,
+          #'Blues-Rock': 1147, убрать лажу
           'Lounge': 1054,
 
           'Classical': 5,
@@ -169,24 +169,29 @@ def artist(message):
 
 def search_by_artist(message):
     artist = message.text
-    artist_request = client.get(artist)
-    if 'errors' not in artist_request:  #Идем дальше, если имя артиста корректно
-        artist_id = artist_request['id']
-        user_id = message.chat.id
-        artist = artist_request['name']
-        city = pw.get_city(user_id)
-        if pw.is_artist_exist(artist_id): #Идем дальше, если артист есть в базе данных
-            message_to_bandsintown(page=0, user_id=user_id, artist_id=artist_id, city=city)
-        else:                           #Если нет в базе, то проверяем наличие концертов
-            events = client.events(artist)
-            if events:                  #Если концерты есть, то добавляем артиста в базу
-                pw.add_artist(artist_id, artist, events)
-                message_to_bandsintown(0, user_id, artist_id, city)
-            else:                       #В противном случае сообщаем об отсутствии ближайших концертов
-                logging.error("Oooops. No " + " concert")
-                bot.send_message(message.chat.id, artist + ' is not currently on tour')
-    else:
+    try:
+        artist_request = client.get(artist)
+    except:
+        logging.error("stupid error by " + artist + "in bandsintown")
         bot.send_message(message.chat.id, 'Artist name is invalid')
+    else:
+        if 'errors' not in artist_request:  #Идем дальше, если имя артиста корректно
+            artist_id = artist_request['id']
+            user_id = message.chat.id
+            artist = artist_request['name']
+            city = pw.get_city(user_id)
+            if pw.is_artist_exist(artist_id): #Идем дальше, если артист есть в базе данных
+                message_to_bandsintown(page=0, user_id=user_id, artist_id=artist_id, city=city)
+            else:                           #Если нет в базе, то проверяем наличие концертов
+                events = client.events(artist)
+                if events:                  #Если концерты есть, то добавляем артиста в базу
+                    pw.add_artist(artist_id, artist, events)
+                    message_to_bandsintown(0, user_id, artist_id, city)
+                else:                       #В противном случае сообщаем об отсутствии ближайших концертов
+                    logging.error("Oooops. No " + " concert")
+                    bot.send_message(message.chat.id, artist + ' is not currently on tour')
+        else:
+            bot.send_message(message.chat.id, 'Artist name is invalid')
     options_keyboard(message)
 
 def message_to_bandsintown(page, user_id, artist_id, city, new_event=0):
@@ -288,7 +293,7 @@ def pages(call):
             parse_mode='Markdown',
             reply_markup=pages_keyboard(int(page), int(artist), city),
             disable_web_page_preview=True)
-        
+
 @bot.message_handler(regexp='Search by genre' + piano)
 def genre(message):
     keyboard = types.ReplyKeyboardMarkup()
@@ -320,7 +325,7 @@ def style(message):
 def blues(message):
     keyboard = types.ReplyKeyboardMarkup()
     keyboard.add(*[types.KeyboardButton(genre) for genre in ['R&B/Soul', 'Jazz', 'Blues', 'Swing',
-                                                             'Lounge', 'Blues-Rock']])
+                                                             'Lounge']])
     msg = bot.send_message(message.chat.id, sax + notes, reply_markup=keyboard)
     bot.register_next_step_handler(msg, search_by_genre)
 
@@ -347,24 +352,29 @@ def search_by_genre(message):
     else:
         bot.send_message(message.chat.id, "\n".join(my_artists))
         for artist in my_artists:
-            artist_request = client.get(artist)
-            if 'errors' not in artist_request:  #Идем дальше, если имя артиста корректно
-                artist_id = artist_request['id']
-                user_id = message.chat.id
-                artist = artist_request['name']
-                city = pw.get_city(user_id)
-                if pw.is_artist_exist(artist_id): #Идем дальше, если артист есть в базе данных
-                    message_to_bandsintown(page=0, user_id=user_id, artist_id=artist_id, city=city)
-                else:                           #Если нет в базе, то проверяем наличие концертов
-                    events = client.events(artist)
-                    if events:                  #Если концерты есть, то добавляем артиста в базу
-                        pw.add_artist(artist_id, artist, events)
-                        message_to_bandsintown(page=0, user_id=user_id, artist_id=artist_id, city=city)
-                    else:                       #В противном случае сообщаем об отсутствии ближайших концертов
-                        logging.error("Oooops. No " + " concert")
-                        bot.send_message(message.chat.id, artist + ' is not currently on tour')
-            else:
+            try:
+                artist_request = client.get(artist)
+            except:
+                logging.error("stupid error by " + artist + "in bandsintown")
                 bot.send_message(message.chat.id, 'Artist name is invalid')
+            else:
+                if 'errors' not in artist_request:  #Идем дальше, если имя артиста корректно
+                    artist_id = artist_request['id']
+                    user_id = message.chat.id
+                    artist = artist_request['name']
+                    city = pw.get_city(user_id)
+                    if pw.is_artist_exist(artist_id): #Идем дальше, если артист есть в базе данных
+                        message_to_bandsintown(page=0, user_id=user_id, artist_id=artist_id, city=city)
+                    else:                           #Если нет в базе, то проверяем наличие концертов
+                        events = client.events(artist)
+                        if events:                  #Если концерты есть, то добавляем артиста в базу
+                            pw.add_artist(artist_id, artist, events)
+                            message_to_bandsintown(0, user_id, artist_id, city)
+                        else:                       #В противном случае сообщаем об отсутствии ближайших концертов
+                            logging.error("Oooops. No " + " concert")
+                            bot.send_message(message.chat.id, artist + ' is not currently on tour')
+                else:
+                    bot.send_message(message.chat.id, 'Artist name is invalid')
     options_keyboard(message)
 
 @bot.message_handler(regexp='Search by similar' + shadow)
@@ -381,25 +391,30 @@ def search_by_similar(message):
     else:
         bot.send_message(message.chat.id, "\n".join(my_artists))
         for artist in my_artists:
-            artist_request = client.get(artist)
-            if 'errors' not in artist_request:  #Идем дальше, если имя артиста корректно
-                artist_id = artist_request['id']
-                user_id = message.chat.id
-                artist = artist_request['name']
-                city = pw.get_city(user_id)
-                if pw.is_artist_exist(artist_id): #Идем дальше, если артист есть в базе данных
-                    message_to_bandsintown(page=0, user_id=user_id, artist_id=artist_id, city=city)
-                else:                           #Если нет в базе, то проверяем наличие концертов
-                    events = client.events(artist)
-                    if events:                  #Если концерты есть, то добавляем артиста в базу
-                        pw.add_artist(artist_id, artist, events)
-                        message_to_bandsintown(page=0, user_id=user_id, artist_id=artist_id, city=city)
-                    else:                       #В противном случае сообщаем об отсутствии ближайших концертов
-                        logging.error("Oooops. No " + " concert")
-                        bot.send_message(message.chat.id, artist + ' is not currently on tour')
-            else:
+            try:
+                artist_request = client.get(artist)
+            except:
+                logging.error("stupid error by " + artist + "in bandsintown")
                 bot.send_message(message.chat.id, 'Artist name is invalid')
-        options_keyboard(message)
+            else:
+                if 'errors' not in artist_request:  #Идем дальше, если имя артиста корректно
+                    artist_id = artist_request['id']
+                    user_id = message.chat.id
+                    artist = artist_request['name']
+                    city = pw.get_city(user_id)
+                    if pw.is_artist_exist(artist_id): #Идем дальше, если артист есть в базе данных
+                        message_to_bandsintown(page=0, user_id=user_id, artist_id=artist_id, city=city)
+                    else:                           #Если нет в базе, то проверяем наличие концертов
+                        events = client.events(artist)
+                        if events:                  #Если концерты есть, то добавляем артиста в базу
+                            pw.add_artist(artist_id, artist, events)
+                            message_to_bandsintown(0, user_id, artist_id, city)
+                        else:                       #В противном случае сообщаем об отсутствии ближайших концертов
+                            logging.error("Oooops. No " + " concert")
+                            bot.send_message(message.chat.id, artist + ' is not currently on tour')
+                else:
+                    bot.send_message(message.chat.id, 'Artist name is invalid')
+    options_keyboard(message)
 
 @bot.message_handler(regexp='Follow' + heart_eyes)
 def fan_of_handler(message):
@@ -408,18 +423,23 @@ def fan_of_handler(message):
 
 def fan_of(message):
     artist_name = message.text
-    artist_request = client.get(artist_name)
-    if 'errors' not in artist_request:
-        artist_id = artist_request['id']
-        user_id = message.from_user.id
-        artist_name = artist_request['name']
-        events = client.events(artist_name)
-        if not events:
-            events = '[]'
-        pw.add_relation(user_id, artist_id, artist_name, events)
-        bot.send_message(message.chat.id, artist_name + ' added in favorites')
-    else:
+    try:
+        artist_request = client.get(artist_name)
+    except:
+        logging.error("stupid error by " + artist_name + "in bandsintown")
         bot.send_message(message.chat.id, 'Artist name is invalid')
+    else:
+        if 'errors' not in artist_request:
+            artist_id = artist_request['id']
+            user_id = message.from_user.id
+            artist_name = artist_request['name']
+            events = client.events(artist_name)
+            if not events:
+                events = '[]'
+            pw.add_relation(user_id, artist_id, artist_name, events)
+            bot.send_message(message.chat.id, artist_name + ' added in favorites')
+        else:
+            bot.send_message(message.chat.id, 'Artist name is invalid')
 
 
 
@@ -447,18 +467,23 @@ def delete_handler(message):
 
 def delete(message):
     artist_name = message.text
-    artist_request = client.get(artist_name)
-    if 'errors' not in artist_request:
-        artist_id = artist_request['id']
-        user_id = message.from_user.id
-        artist_name = artist_request['name']
-        result = pw.del_relation(user_id, artist_id)
-        if result:
-            bot.send_message(message.chat.id, artist_name + ' deleted from favorites')
-        else:
-            bot.send_message(message.chat.id, artist_name + " isn't in favorites")
-    else:
+    try:
+        artist_request = client.get(artist_name)
+    except:
+        logging.error("stupid error by " + artist_name + "in bandsintown")
         bot.send_message(message.chat.id, 'Artist name is invalid')
+    else:
+        if 'errors' not in artist_request:
+            artist_id = artist_request['id']
+            user_id = message.from_user.id
+            artist_name = artist_request['name']
+            result = pw.del_relation(user_id, artist_id)
+            if result:
+                bot.send_message(message.chat.id, artist_name + ' deleted from favorites')
+            else:
+                bot.send_message(message.chat.id, artist_name + " isn't in favorites")
+        else:
+            bot.send_message(message.chat.id, 'Artist name is invalid')
 
 @bot.message_handler(regexp='Preview' + notes)
 def preview(message):
