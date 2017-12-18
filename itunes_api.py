@@ -16,7 +16,6 @@ def get_genre_by_artist_id(genre_id, **kwargs):
     genres = requests.get(URL, params = default).json()['results']
     unique_artists = set(genre['artistName'] for genre in genres)
     valid_artists = []
-    print(unique_artists)
     while len(valid_artists) < 5:
         get_random_artist = random.sample(unique_artists,1)[0]
         artist_request = client.get(get_random_artist)
@@ -25,7 +24,6 @@ def get_genre_by_artist_id(genre_id, **kwargs):
         unique_artists.remove(get_random_artist)
     return valid_artists
 
-print(get_genre_by_artist_id(1153, limit=200))
 
 
 
