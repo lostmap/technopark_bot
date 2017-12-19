@@ -41,7 +41,7 @@ app.conf.update(
     CELERYBEAT_SCHEDULE={
         'multiply-each-10-seconds': {
             'task': 'tasks.add_days',
-            'schedule': datetime.timedelta(day=1),
+            'schedule': datetime.timedelta(days=1),
             'args': (2, )
         },
     },
