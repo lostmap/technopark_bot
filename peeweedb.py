@@ -149,8 +149,8 @@ if __name__ == "__main__":
     add_tables()
     # user = User.create(chat_id=124896, city='')
     #
-    # for user in User.select():
-    #     print(user.id, " ", user.chat_id, " ", user.city)
+    for user in User.select():
+         print(user.id, " ", user.chat_id, " ", user.city)
     #
     #
     # add_user(179371682, "Riga")
@@ -160,11 +160,11 @@ if __name__ == "__main__":
     # for user in User.select():
     #     print(user.id, " ", user.chat_id, " ", user.city)
     #
-    for artist in Artist.select():
-        print(artist.id, " ", artist.b_in_t_id," ", artist.name, " ", artist.information)
-        artist.information = "[{1:2},{3:4}]"
-        artist.save()
-    print("\n\n\n")
+    #for artist in Artist.select():
+    #    print(artist.id, " ", artist.b_in_t_id," ", artist.name, " ", artist.information)
+    #    artist.information = "[{1:2},{3:4}]"
+    #    artist.save()
+    #print("\n\n\n")
 
 
     # # show relations

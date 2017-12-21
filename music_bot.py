@@ -63,7 +63,7 @@ genres = {  # Blues/Jazz
           'Blues': 2,
           'Jazz': 11,
           'R&B/Soul': 15,
-          'Swing': 1055,
+          #'Swing': 1055,
           #'Blues-Rock': 1147, убрать лажу
           'Lounge': 1054,
 
@@ -80,7 +80,7 @@ genres = {  # Blues/Jazz
           'Ambient': 1056,
           'Electronica': 1058,
           'House': 1060,
-          'Jungle/Drum’n’bass': 1049,
+          "Jungle/Drum'n'Bass": 1049,
           'Techno': 1050,
           'Trance': 1051,
 
@@ -352,8 +352,8 @@ def style(message):
 @bot.message_handler(regexp='Blues/Jazz')
 def blues(message):
     keyboard = types.ReplyKeyboardMarkup()
-    keyboard.add(*[types.KeyboardButton(genre) for genre in ['R&B/Soul', 'Jazz', 'Blues', 'Swing',
-                                                             'Lounge']])
+    keyboard.add(*[types.KeyboardButton(genre) for genre in ['R&B/Soul', 'Jazz',
+                                                             'Blues','Lounge']])
     msg = bot.send_message(message.chat.id, sax + notes, reply_markup=keyboard)
     bot.register_next_step_handler(msg, search_by_genre)
 
