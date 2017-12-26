@@ -58,7 +58,7 @@ def get_similar_artists(artist):
                     unique_artists.remove(get_random_artist)
                 else:
                     if 'errors' not in artist_request:
-                        valid_artists.append(get_random_artist)
+                        valid_artists.append(artist_request)
                     unique_artists.remove(get_random_artist)
             return valid_artists
 
