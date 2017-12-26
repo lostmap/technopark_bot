@@ -200,7 +200,7 @@ def search_by_artist(message):
     try:
         artist_request = client.get(artist)
     except:
-        logging.error("stupid error by " + artist + "in bandsintown")
+        logging.error("stupid error by " + "in bandsintown")
         bot.send_message(message.chat.id, 'Artist name is invalid')
     else:
         if 'errors' not in artist_request:  #Идем дальше, если имя артиста корректно
@@ -532,5 +532,20 @@ def snippet_search(message):
     else:
         bot.send_message(message.chat.id, 'Artist name is invalid')
 
-if __name__ == '__main__':
-    bot.polling(none_stop=True)
+def telegram_polling():
+    try:
+        bot.polling(none_stop=True, timeout=60) #constantly get messages from Telegram
+    except:
+        logging.error("internet timeout error")
+        bot.stop_polling()
+        time.sleep(10)
+        telegram_polling()
+
+if __name__ == '__main__':    
+    telegram_polling()
+#if __name__ == '__main__':
+#    try:
+#        bot.polling(none_stop=True)
+#    except:
+#        logging.error("internet timeout error")
+#        time.sleep(5)
